@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webvr - daydream</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+		<meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+		<!-- Origin Trial Token, feature = WebVR (For Chrome M59+), origin = https://threejs.org, expires = 2017-10-09 -->
+		<meta http-equiv="origin-trial" data-feature="WebVR (For Chrome M59+)" data-expires="2017-10-09" content="AjrMPp+ZdEH97MOiKUzcpxLvh+B6I0CL55bPSbvQxL5ggVHl7X2dyEwTfXUgaMV7YLPOev4VZ4Uz+jMTsx3MPQEAAABNeyJvcmlnaW4iOiJodHRwczovL3RocmVlanMub3JnOjQ0MyIsImZlYXR1cmUiOiJXZWJWUjEuMSIsImV4cGlyeSI6MTUwNzU3MTAwOH0=">
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #000;
+				color: #fff;
+				margin: 0px;
+				overflow: hidden;
+			}
+			a {
+				color: #f00;
+			}
+
+      canvas {
+        box-sizing: border-box;
+        height: 100%;
+        left: 0;
+        margin: 0;
+        position: absolute;
+        top: 0;
+        width: 100%;
+      }
+		</style>
+	</head>
+
+
+	<body>
+<!--
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
+		<script>
+		function startLogger(server) {
+
+		  var socket = io.connect(server);
+		  socket.on('connect', function(data) {
+		  });
+
+		  function wrapConsoleInObserver () {
+		    for (var key in console) {
+		      if (typeof console[key] === 'function') {
+		        var fn = console[key].bind(console)
+		        console[key] = (...args) => {
+		          socket.emit('messages', key, args);
+		          return fn.apply(null, args)
+		        }
+		      }
+		    }
+		  }
+
+		  wrapConsoleInObserver();
+		  console.log('Logger started');
+		}
+
+	    startLogger('http://192.168.1.20:4200');
+	  </script>
+-->
+		<script src="../build/three.js"></script>
+
+		<script src="js/vr/DaydreamController.js"></script>
+		<script src="js/vr/WebVR.js"></script>
+		<script src="webgl-debug.js"></script>
+
+		<!--
+		#extension GL_OVR_multiview2 : require
+		#define VIEW_ID gl_ViewID_OVR
+		layout(num_views=2) in;-->
+
+		<script id="vertexShader" type="x-shader/x-vertex">
+			uniform mat4 leftProjectionMatrix;
+	    uniform mat4 leftViewMatrix;
+	    uniform mat4 rightProjectionMatrix;
+	    uniform mat4 rightViewMatrix;
+			uniform mat4 modelMatrix;
+			uniform mat4 modelViewMatrix;
+
+			in vec3 position;
+			flat out uint view_id;
+
+			void main()	{
+				view_id = VIEW_ID;
+				mat4 m = VIEW_ID == 0u ? (leftProjectionMatrix * leftViewMatrix) : (rightProjectionMatrix * rightViewMatrix);
+				m = m * modelMatrix;
+				gl_Position = m * vec4( position, 1.0 );
+
+			}
+
+		</script>
+	<!-- #version 300 es -->
+		<script id="fragmentShader" type="x-shader/x-fragment">
+			precision mediump float;
+			uniform vec3 color;
+			flat in uint view_id;
+
+			void main()	{
+
+				gl_FragColor = view_id == 0u ? vec4(1.0, 1.0, 0.0, 1.0) : vec4(1.0, 0.0, 0.0, 1.0); // vec4( color, 1.0 );
+
+			}
+
+		</script>
+
+		<script>
+
+			WEBVR.attributes = {
+				depth: true,
+				multiview: true
+			};
+
+			WEBVR.checkAvailability().catch( function( message ) {
+
+				document.body.appendChild( WEBVR.getMessageContainer( message ) );
+
+			} );
+
+			//
+
+			var clock = new THREE.Clock();
+
+			var container;
+			var camera, scene, ray, raycaster, renderer;
+			var gamepad;
+
+			var room;
+
+			init();
+			animate();
+
+			function init() {
+
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+
+				var info = document.createElement( 'div' );
+				info.style.position = 'absolute';
+				info.style.top = '10px';
+				info.style.width = '100%';
+				info.style.textAlign = 'center';
+				info.innerHTML = '<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> webvr - daydream';
+				container.appendChild( info );
+
+				scene = new THREE.Scene();
+
+				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.1, 10 );
+
+				room = new THREE.Mesh(
+					new THREE.BoxGeometry( 6, 6, 6, 8, 8, 8 ),
+					material
+				);
+				scene.add( room );
+
+				room = new THREE.Group();
+				scene.add( room );
+
+				scene.add( new THREE.HemisphereLight( 0x606060, 0x404040 ) );
+
+				var light = new THREE.DirectionalLight( 0xffffff );
+				light.position.set( 1, 1, 1 ).normalize();
+				scene.add( light );
+
+				var geometry = new THREE.BoxGeometry( 0.15, 0.15, 0.15 );
+				var geometry = new THREE.SphereGeometry( 0.2, 32, 32 );
+
+				for ( var i = 0; i < 200; i ++ ) {
+
+					var material = new THREE.RawShaderMaterial( {
+						uniforms: {
+							leftProjectionMatrix: { value: new THREE.Matrix4() },
+					    leftViewMatrix: { value: new THREE.Matrix4() },
+					    rightProjectionMatrix: { value: new THREE.Matrix4() },
+					    rightViewMatrix: { value: new THREE.Matrix4() },
+							modelMatrix: { value: new THREE.Matrix4() },
+							modelViewMatrix: { value: new THREE.Matrix4() },
+							color: { value: new THREE.Color( Math.random() * 0xffffff ) }
+						},
+						vertexShader: document.getElementById( 'vertexShader' ).textContent,
+						fragmentShader: document.getElementById( 'fragmentShader' ).textContent
+
+					} );
+
+					// var material = new THREE.MeshBasicMaterial( { color: Math.random() * 0xffffff } );
+					// var material = new THREE.MeshLambertMaterial( { color: Math.random() * 0xffffff } );
+					var material = new THREE.MeshStandardMaterial( { color: Math.random() * 0xffffff, roughness: Math.random(), metalness: Math.random() } );
+
+					var object = new THREE.Mesh( geometry, material );
+
+					object.position.x = Math.random() * 4 - 2;
+					object.position.y = Math.random() * 4 - 2;
+					object.position.z = Math.random() * 4 - 2;
+/*
+					object.rotation.x = Math.random() * 2 * Math.PI;
+					object.rotation.y = Math.random() * 2 * Math.PI;
+					object.rotation.z = Math.random() * 2 * Math.PI;
+
+					object.scale.x = Math.random() + 0.5;
+					object.scale.y = Math.random() + 0.5;
+					object.scale.z = Math.random() + 0.5;
+
+					object.userData.velocity = new THREE.Vector3();
+					object.userData.velocity.x = Math.random() * 0.01 - 0.005;
+					object.userData.velocity.y = Math.random() * 0.01 - 0.005;
+					object.userData.velocity.z = Math.random() * 0.01 - 0.005;
+*/
+					room.add( object );
+
+				}
+
+				//
+
+				raycaster = new THREE.Raycaster();
+
+				//
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				container.appendChild( renderer.domElement );
+
+				renderer.vr.enabled = true;
+
+				//
+
+				WEBVR.getVRDisplay( function ( device ) {
+
+					renderer.vr.setDevice( device );
+					document.body.appendChild( WEBVR.getButton( device, renderer.domElement ) );
+
+				} );
+
+				//
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+			}
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			//
+
+			function animate() {
+
+				renderer.animate( render );
+
+			}
+
+			function render() {
+
+				var delta = clock.getDelta() * 60;
+
+				// keep cubes inside room
+
+				for ( var i = 0; i < room.children.length; i ++ ) {
+
+					var cube = room.children[ i ];
+
+					if ( renderer.vr.enabled ) {
+
+						var camera2 = renderer.vr.getCamera( camera );
+
+						if (camera2.isArrayCamera) {
+							if ( cube.material.uniforms ) {
+								cube.material.uniforms.leftProjectionMatrix.value = camera2.cameras[ 0 ].projectionMatrix;
+								cube.material.uniforms.rightProjectionMatrix.value = camera2.cameras[ 1 ].projectionMatrix;
+								cube.material.uniforms.leftViewMatrix.value = camera2.cameras[ 0 ].matrixWorldInverse;
+								cube.material.uniforms.rightViewMatrix.value = camera2.cameras[ 1 ].matrixWorldInverse;
+								cube.material.uniforms.modelMatrix.value = cube.matrixWorld;
+							}
+
+						}
+					}
+
+/*
+					cube.position.add( cube.userData.velocity );
+
+					if ( cube.position.x < - 3 || cube.position.x > 3 ) {
+
+						cube.position.x = THREE.Math.clamp( cube.position.x, - 3, 3 );
+						cube.userData.velocity.x = - cube.userData.velocity.x;
+
+					}
+
+					if ( cube.position.y < - 3 || cube.position.y > 3 ) {
+
+						cube.position.y = THREE.Math.clamp( cube.position.y, - 3, 3 );
+						cube.userData.velocity.y = - cube.userData.velocity.y;
+
+					}
+
+					if ( cube.position.z < - 3 || cube.position.z > 3 ) {
+
+						cube.position.z = THREE.Math.clamp( cube.position.z, - 3, 3 );
+						cube.userData.velocity.z = - cube.userData.velocity.z;
+
+					}
+
+					cube.rotation.x += cube.userData.velocity.x * 2 * delta;
+					cube.rotation.y += cube.userData.velocity.y * 2 * delta;
+					cube.rotation.z += cube.userData.velocity.z * 2 * delta;
+*/
+				}
+
+
+				renderer.render( scene, camera );
+
+			}
+
+		</script>
+	</body>
+</html>

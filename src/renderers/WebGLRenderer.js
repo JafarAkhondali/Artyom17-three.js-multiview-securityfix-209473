@@ -1,3 +1,44 @@
+/*
+if (presenting)
+  if (views)
+    if (views.multiview)
+      ViewsAndMultiview()
+    else
+      Views()
+  else
+    ArrayCamera()
+else
+  if (ArrayCamera)
+    NoArrayCamera
+  else
+    ArrayCamera
+
+No array camera
+---------------
+for obj in renderlist:
+  render (obj, cam)
+
+Array camera
+------------
+for obj in renderlist:
+  for cam in arrayCamera:
+    render (obj, cam)
+
+Views
+-----
+for view in display.getViews():
+  for obj in renderlist:
+    render (obj, [framedata.leftMatrix, frameData.rightMatrix][view], view.fbo)
+
+Views & Multiview
+-----------------
+view = display.getViews()[0]
+setViewPortAndScissors(view)
+for obj in renderlist:
+  render (obj, [framedata.leftMatrix, framedata.rightMatrix], view.fbo)
+ */
+
+
 import {
 	REVISION,
 	RGBAFormat,
@@ -50,6 +91,8 @@ import { WebXRManager } from './webvr/WebXRManager.js';
  * @author szimek / https://github.com/szimek/
  * @author tschw
  */
+
+var renderTargetMultiview = null;
 
 function WebGLRenderer( parameters ) {
 
@@ -215,6 +258,24 @@ function WebGLRenderer( parameters ) {
 			}
 
 		}
+
+		function logGLCall(functionName, args) {
+		   console.log("gl." + functionName + "(" +
+		      WebGLDebugUtils.glFunctionArgsToString(functionName, args) + ")");
+		}
+		// _gl = WebGLDebugUtils.makeDebugContext(_gl, undefined, logGLCall);
+
+		this.webgl2 = true; // WTF? requesting 'webgl' and assuming it is webgl2? (!AB)
+
+        var ext = _gl.getExtension('WEBGL_multiview'); //!AB MV
+        if (ext) {
+          console.log("MULTIVIEW extension is supported");
+          this.multiviewSupported = true;
+        }
+        else {
+          console.log("MULTIVIEW extension is NOT supported");
+          this.multiviewSupported = false;
+        }
 
 		// Some experimental-webgl implementations do not have getShaderPrecisionFormat
 
@@ -1097,10 +1158,72 @@ function WebGLRenderer( parameters ) {
 
 		if ( this.info.autoReset ) this.info.reset();
 
+
+		function WebGLRenderTargetMultiview( width, height, options ) {
+
+			this.uuid = _Math.generateUUID();
+
+			this.width = width;
+			this.height = height;
+			this.texture = null;
+
+			this.scissor = new Vector4( 0, 0, width, height );
+			this.scissorTest = false;
+
+			this.viewport = new Vector4( 0, 0, width, height );
+
+			options = options || {};
+
+			if ( options.webglFramebuffer ) {
+				properties.get( this ).__webglFramebuffer = options.webglFramebuffer;
+
+			} else {
+
+				if ( options.minFilter === undefined ) options.minFilter = LinearFilter;
+
+				this.texture = new Texture( undefined, undefined, options.wrapS, options.wrapT, options.magFilter, options.minFilter, options.format, options.type, options.anisotropy, options.encoding );
+
+			}
+
+			this.depthBuffer = options.depthBuffer !== undefined ? options.depthBuffer : true;
+			this.stencilBuffer = options.stencilBuffer !== undefined ? options.stencilBuffer : true;
+			this.depthTexture = options.depthTexture !== undefined ? options.depthTexture : null;
+
+		}
+
+
 		if ( renderTarget === undefined ) {
 
 			renderTarget = null;
 
+			var vrDevice = vr.getDevice();
+			if ( vrDevice && vrDevice.isPresenting ) {
+
+				var views = vr.getViews();
+				if ( views.length > 0 ) {
+
+					var view = views[ 0 ];
+					var multiview = view.getAttributes().multiview;
+					var viewport = view.getViewport();
+
+                    //!AB @TODO: consider to use WHOLE viewport here, not only W/H!!!
+					if ( ! renderTargetMultiview || renderTargetMultiview.width != viewport.width || renderTargetMultiview.height != viewport.height) {
+
+						renderTargetMultiview = new WebGLRenderTargetMultiview(viewport.width, viewport.height, {
+
+							webglFramebuffer: view.framebuffer
+
+						});
+
+						renderTargetMultiview.scissorTest = true;
+
+					}
+
+				}
+
+				renderTarget = renderTargetMultiview;
+
+			}
 		}
 
 		this.setRenderTarget( renderTarget );
@@ -1134,7 +1257,6 @@ function WebGLRenderer( parameters ) {
 		}
 
 		// Generate mipmap if we're using any kind of mipmap filtering
-
 		if ( renderTarget ) {
 
 			textures.updateRenderTargetMipmap( renderTarget );
@@ -1149,6 +1271,8 @@ function WebGLRenderer( parameters ) {
 
 		state.setPolygonOffset( false );
 
+		state.setScissorTest( false );
+		
 		scene.onAfterRender( _this, scene, camera );
 
 		if ( vr.enabled ) {
@@ -1604,6 +1728,8 @@ function WebGLRenderer( parameters ) {
 
 	function setProgram( camera, fog, material, object ) {
 
+		var multiviewSupport = vr.hasMultiviewSupport();
+
 		_usedTextureUnits = 0;
 
 		var materialProperties = properties.get( material );
@@ -1692,9 +1818,21 @@ function WebGLRenderer( parameters ) {
 
 		}
 
+		var device = vr.getDevice();
+		p_uniforms.setValue( _gl, 'isVRPresenting', device && device.isPresenting );
+
 		if ( refreshProgram || _currentCamera !== camera ) {
 
-			p_uniforms.setValue( _gl, 'projectionMatrix', camera.projectionMatrix );
+			if (multiviewSupport && camera.cameras) { //!AB: camera.cameras might be still not set!
+				p_uniforms.setValue( _gl, 'leftProjectionMatrix', camera.cameras[ 0 ].projectionMatrix );
+				p_uniforms.setValue( _gl, 'rightProjectionMatrix', camera.cameras[ 1 ].projectionMatrix );
+				p_uniforms.setValue( _gl, 'projectionMatrix', camera.projectionMatrix );
+
+			} else {
+
+				p_uniforms.setValue( _gl, 'projectionMatrix', camera.projectionMatrix );
+
+			}
 
 			if ( capabilities.logarithmicDepthBuffer ) {
 
@@ -1702,6 +1840,9 @@ function WebGLRenderer( parameters ) {
 					2.0 / ( Math.log( camera.far + 1.0 ) / Math.LN2 ) );
 
 			}
+
+
+			// Avoid unneeded uniform updates per ArrayCamera's sub-camera
 
 			if ( _currentCamera !== camera ) {
 
@@ -1742,7 +1883,23 @@ function WebGLRenderer( parameters ) {
 				material.isShaderMaterial ||
 				material.skinning ) {
 
-				p_uniforms.setValue( _gl, 'viewMatrix', camera.matrixWorldInverse );
+				if (multiviewSupport && camera.cameras) { //!AB: camera.cameras might be still not set!
+
+					p_uniforms.setValue( _gl, 'leftViewMatrix', camera.cameras[ 0 ].matrixWorldInverse );
+					p_uniforms.setValue( _gl, 'rightViewMatrix', camera.cameras[ 1 ].matrixWorldInverse );
+					p_uniforms.setValue( _gl, 'viewMatrix', camera.matrixWorldInverse );
+
+				} else {
+
+					p_uniforms.setValue( _gl, 'viewMatrix', camera.matrixWorldInverse );
+
+				}
+
+			} else {
+
+				// For our rawshader material!
+				// p_uniforms.setValue( _gl, 'leftViewMatrix', camera.cameras[ 0 ].matrixWorldInverse );
+				//p_uniforms.setValue( _gl, 'rightViewMatrix', camera.cameras[ 1 ].matrixWorldInverse );
 
 			}
 
@@ -2524,6 +2681,8 @@ function WebGLRenderer( parameters ) {
 	};
 
 	this.setRenderTarget = function ( renderTarget ) {
+
+		// !!!!!!!!!!!!!!!!!
 
 		_currentRenderTarget = renderTarget;
 

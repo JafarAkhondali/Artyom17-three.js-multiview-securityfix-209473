@@ -6,6 +6,10 @@
  */
 
 var WEBVR = {
+	attributes: {
+		depth: true,
+		multiview: true		
+	},
 
 	createButton: function ( renderer, options ) {
 
@@ -28,9 +32,11 @@ var WEBVR = {
 			button.onmouseenter = function () { button.style.opacity = '1.0'; };
 			button.onmouseleave = function () { button.style.opacity = '0.5'; };
 
+			var attributes = this.attributes;
+
 			button.onclick = function () {
 
-				device.isPresenting ? device.exitPresent() : device.requestPresent( [ { source: renderer.domElement } ] );
+				device.isPresenting ? device.exitPresent() : device.requestPresent( [ { source: renderer.domElement, attributes: attributes } ] );
 
 			};
 

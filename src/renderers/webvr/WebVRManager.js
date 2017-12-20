@@ -70,7 +70,14 @@ function WebVRManager( renderer ) {
 			currentPixelRatio = renderer.getPixelRatio();
 			currentSize = renderer.getSize();
 
-			renderer.setDrawingBufferSize( renderWidth * 2, renderHeight, 1 );
+            var num_views = 2;
+            var views = device.getViews ? device.getViews() : [];
+            if (views.length > 0) {
+              var view = views[0];
+              num_views = (view.getAttributes().multiview) ? 1 : 2;
+              console.log("onVRPresentChange, presenting, multiview = " + ((num_views == 1) ? true : false));
+            }
+			renderer.setDrawingBufferSize( renderWidth * num_views, renderHeight, 1 );
 
 			animation.start();
 
@@ -218,6 +225,31 @@ function WebVRManager( renderer ) {
 
 		if ( object !== undefined ) poseTarget = object;
 
+	};
+
+	this.getViews = function () {
+
+		if ( device !== null && device.getViews ) {
+
+			return device.getViews() || [];
+
+		}
+
+		return [];
+
+	};
+
+	this.hasMultiviewSupport = function () {
+
+		var views = this.getViews();
+
+		if ( views.length > 0 ) {
+
+			return views[ 0 ].getAttributes().multiview;
+
+		}
+
+		return false;
 	};
 
 	this.getCamera = function ( camera ) {
