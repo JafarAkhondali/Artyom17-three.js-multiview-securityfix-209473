@@ -529,7 +529,7 @@ function WebGLProgram( renderer, extensions, code, material, shader, parameters 
 		var gles3VS = `#define attribute in
 							#define varying out
 							#define texture2D texture
-							#extension GL_OVR_multiview2 : require
+							#extension GL_OVR_multiview : require
 							#define VIEW_ID gl_ViewID_OVR
 							layout(num_views=2) in;
 							#define GL2\n`;

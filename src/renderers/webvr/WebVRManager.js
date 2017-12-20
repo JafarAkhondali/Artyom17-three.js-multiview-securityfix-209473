@@ -52,7 +52,14 @@ function WebVRManager( renderer ) {
 			currentPixelRatio = renderer.getPixelRatio();
 			currentSize = renderer.getSize();
 
-			renderer.setDrawingBufferSize( renderWidth * 2, renderHeight, 1 );
+            var num_views = 2;
+            var views = device.getViews ? device.getViews() : [];
+            if (views.length > 0) {
+              var view = views[0];
+              num_views = (view.getAttributes().multiview) ? 1 : 2;
+              console.log("onVRPresentChange, presenting, multiview = " + ((num_views == 1) ? true : false));
+            }
+			renderer.setDrawingBufferSize( renderWidth * num_views, renderHeight, 1 );
 
 		} else if ( scope.enabled ) {
 

@@ -269,7 +269,17 @@ function WebGLRenderer( parameters ) {
 		}
 		// _gl = WebGLDebugUtils.makeDebugContext(_gl, undefined, logGLCall);
 
-		this.webgl2 = true;
+		this.webgl2 = true; // WTF? requesting 'webgl' and assuming it is webgl2? (!AB)
+
+        var ext = _gl.getExtension('WEBGL_multiview'); //!AB MV
+        if (ext) {
+          console.log("MULTIVIEW extension is supported");
+          this.multiviewSupported = true;
+        }
+        else {
+          console.log("MULTIVIEW extension is NOT supported");
+          this.multiviewSupported = false;
+        }
 
 		// Some experimental-webgl implementations do not have getShaderPrecisionFormat
 
@@ -1206,7 +1216,8 @@ function WebGLRenderer( parameters ) {
 					var multiview = view.getAttributes().multiview;
 					var viewport = view.getViewport();
 
-					if ( ! renderTargetMultiview ) {
+                    //!AB @TODO: consider to use WHOLE viewport here, not only W/H!!!
+					if ( ! renderTargetMultiview || renderTargetMultiview.width != viewport.width || renderTargetMultiview.height != viewport.height) {
 
 						renderTargetMultiview = new WebGLRenderTargetMultiview(viewport.width, viewport.height, {
 
@@ -1830,7 +1841,7 @@ function WebGLRenderer( parameters ) {
 
 		if ( refreshProgram || camera !== _currentCamera ) {
 
-			if (multiviewSupport) {
+			if (multiviewSupport && camera.cameras) { //!AB: camera.cameras might be still not set!
 				p_uniforms.setValue( _gl, 'leftProjectionMatrix', camera.cameras[ 0 ].projectionMatrix );
 				p_uniforms.setValue( _gl, 'rightProjectionMatrix', camera.cameras[ 1 ].projectionMatrix );
 				p_uniforms.setValue( _gl, 'projectionMatrix', camera.projectionMatrix );
@@ -1890,7 +1901,7 @@ function WebGLRenderer( parameters ) {
 				material.isShaderMaterial ||
 				material.skinning ) {
 
-				if ( multiviewSupport ) {
+				if (multiviewSupport && camera.cameras) { //!AB: camera.cameras might be still not set!
 
 					p_uniforms.setValue( _gl, 'leftViewMatrix', camera.cameras[ 0 ].matrixWorldInverse );
 					p_uniforms.setValue( _gl, 'rightViewMatrix', camera.cameras[ 1 ].matrixWorldInverse );
