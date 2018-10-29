@@ -1448,8 +1448,13 @@ function WebGLRenderer( parameters ) {
 		}
 
 	}
-
-	function renderObjects( renderList, scene, camera, overrideMaterial ) {
+/* !AB: this function was modified and renamed to renderObjectsArrayCamera. We also added the following new functions:
+    1) renderObjectsArrayCamera
+    2) renderVRObjects
+    3) renderNonVRObjects
+    4) renderObjectsMultiview
+*/
+	function renderObjectsArrayCamera( renderList, scene, camera, overrideMaterial ) {
 
 		for ( var i = 0, l = renderList.length; i < l; i ++ ) {
 
@@ -1460,7 +1465,7 @@ function WebGLRenderer( parameters ) {
 			var material = overrideMaterial === undefined ? renderItem.material : overrideMaterial;
 			var group = renderItem.group;
 
-			if ( camera.isArrayCamera ) {
+			//!AB: if ( camera.isArrayCamera ) {
 
 				_currentArrayCamera = camera;
 
@@ -1497,13 +1502,13 @@ function WebGLRenderer( parameters ) {
 
 				}
 
-			} else {
+			/*!AB: } else {
 
 				_currentArrayCamera = null;
 
 				renderObject( object, scene, camera, geometry, material, group );
 
-			}
+			}*/
 
 		}
 
@@ -1539,6 +1544,94 @@ function WebGLRenderer( parameters ) {
 		currentRenderState = renderStates.get( scene, _currentArrayCamera || camera );
 
 	}
+
+	//!AB begin
+	function renderNonVRObjects( renderList, scene, camera, overrideMaterial ) {
+
+		if ( camera.isArrayCamera ) {
+			// console.log('>>>>>>>>>>>>>>>>>> Array Camera');
+			renderObjectsArrayCamera( renderList, scene, camera, overrideMaterial );
+
+		} else {
+			// console.log('>>>>>>>>>>>>>>>>>> Non-array camera');
+
+			for ( var i = 0, l = renderList.length; i < l; i ++ ) {
+
+				var renderItem = renderList[ i ];
+
+				var object = renderItem.object;
+				var geometry = renderItem.geometry;
+				var material = overrideMaterial === undefined ? renderItem.material : overrideMaterial;
+				var group = renderItem.group;
+
+				_currentArrayCamera = null;
+
+				renderObject( object, scene, camera, geometry, material, group );
+
+			}
+
+		}
+
+	}
+
+	function renderVRObjects( renderList, scene, camera, overrideMaterial ) {
+
+		var views = vr.getViews();
+
+		if ( views.length > 0 ) {
+
+			// Has multiview support
+			if ( views[ 0 ].getAttributes().multiview ) {
+				// console.log('>>>>>>>>>>>>>>>>>> Views & Multiview');
+
+				// Views & Multiview
+				renderObjectsMultiview( renderList, scene, camera, overrideMaterial );
+
+			} else {
+				// Views
+				// console.log('>>>>>>>>>>>>>>>>>> Views & !Multiview');
+
+			}
+		} else {
+			// console.log('>>>>>>>>>>>>>>>>>> Array camera (no views)');
+
+			renderObjectsArrayCamera( renderList, scene, camera, overrideMaterial );
+
+		}
+	}
+
+	function renderObjects( renderList, scene, camera, overrideMaterial ) {
+
+		var vrDevice = vr.getDevice();
+		if ( vrDevice && vrDevice.isPresenting ) {
+			// console.log('>>>>>>>>> Presenting');
+			renderVRObjects( renderList, scene, camera, overrideMaterial );
+
+		} else {
+
+			// console.log('>>>>>>>>> 2d');
+			renderNonVRObjects( renderList, scene, camera, overrideMaterial );
+
+		}
+
+	}
+
+	function renderObjectsMultiview( renderList, scene, camera, overrideMaterial ) {
+
+		for ( var i = 0, l = renderList.length; i < l; i ++ ) {
+			var renderItem = renderList[ i ];
+
+			var object = renderItem.object;
+			var geometry = renderItem.geometry;
+			var material = overrideMaterial === undefined ? renderItem.material : overrideMaterial;
+			var group = renderItem.group;
+
+			renderObject( object, scene, camera, geometry, material, group );
+
+		}
+
+	}
+	//!AB end
 
 	function initMaterial( material, fog, object ) {
 
