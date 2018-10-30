@@ -268,17 +268,15 @@ function WebGLRenderer( parameters ) {
 		}
 		// _gl = WebGLDebugUtils.makeDebugContext(_gl, undefined, logGLCall);
 
-		this.webgl2 = true; // WTF? requesting 'webgl' and assuming it is webgl2? (!AB)
-
-        var ext = _gl.getExtension('WEBGL_multiview'); //!AB MV
-        if (ext) {
-          console.log("MULTIVIEW extension is supported");
-          this.multiviewSupported = true;
-        }
-        else {
-          console.log("MULTIVIEW extension is NOT supported");
-          this.multiviewSupported = false;
-        }
+    var ext = _gl.getExtension('WEBGL_multiview'); //!AB MV
+    if (ext) {
+      console.log("MULTIVIEW extension is supported");
+      this.multiviewSupported = true;
+    }
+    else {
+      console.log("MULTIVIEW extension is NOT supported");
+      this.multiviewSupported = false;
+    }
 
 		// Some experimental-webgl implementations do not have getShaderPrecisionFormat
 
@@ -1916,7 +1914,7 @@ function WebGLRenderer( parameters ) {
 		}
 
 		var device = vr.getDevice();
-		p_uniforms.setValue( _gl, 'isVRPresenting', device && device.isPresenting );
+		p_uniforms.setValue( _gl, 'isMultiview', device && device.isPresenting && multiviewSupport );
 
 		if ( refreshProgram || _currentCamera !== camera ) {
 

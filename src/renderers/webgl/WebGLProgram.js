@@ -382,7 +382,7 @@ function WebGLProgram( renderer, extensions, code, material, shader, parameters,
 			'uniform mat3 normalMatrix;',
 			'uniform vec3 cameraPosition;',
 
-			'uniform bool isVRPresenting;',
+			'uniform bool isMultiview;',
 			'uniform mat4 leftViewMatrix;',
 			'uniform mat4 rightViewMatrix;',
 			'uniform mat4 leftProjectionMatrix;',
@@ -571,8 +571,8 @@ function WebGLProgram( renderer, extensions, code, material, shader, parameters,
 	var vertexGlsl = prefixVertex + vertexShader;
 	var fragmentGlsl = prefixFragment + fragmentShader;
 
-	// or force es3
-	if ( renderer.webgl2 ) {
+	//!AB: forcing ES3 shaders for multiview 
+	if ( renderer.multiviewSupported ) {
 
 		//@todo Detect version and skip it
 		var gles3VS = `#define attribute in
@@ -601,7 +601,9 @@ function WebGLProgram( renderer, extensions, code, material, shader, parameters,
 		vertexGlsl = '#version 300 es\n' + gles3VS + vertexGlsl;
 		fragmentGlsl = '#version 300 es\n' + gles3PS + fragmentGlsl;
 
-	}
+	} else {
+    vertexGlsl = prefixVertex + '#define VIEW_ID 0\n' + vertexShader;
+  }
 
 //	console.log( '*VERTEX*', vertexGlsl );
 //	console.log( '*FRAGMENT*', fragmentGlsl );

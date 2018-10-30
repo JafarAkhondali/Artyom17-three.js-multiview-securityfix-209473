@@ -1,8 +1,8 @@
-// mat4 viewMatrixEye = isVRPresenting ? (VIEW_ID == 0u ? leftViewMatrix : rightViewMatrix) : viewMatrix;
-// mat4 projectionMatrixEye = isVRPresenting ? (VIEW_ID == 0u ? leftProjectionMatrix : rightProjectionMatrix) : projectionMatrix;
+mat4 viewMatrixEye = isMultiview ? (VIEW_ID == 0u ? leftViewMatrix : rightViewMatrix) : viewMatrix;
+mat4 projectionMatrixEye = isMultiview ? (VIEW_ID == 0u ? leftProjectionMatrix : rightProjectionMatrix) : projectionMatrix;
 
-mat4 viewMatrixEye = VIEW_ID == 0u ? leftViewMatrix : rightViewMatrix;
-mat4 projectionMatrixEye = VIEW_ID == 0u ? leftProjectionMatrix : rightProjectionMatrix;
+//mat4 viewMatrixEye = (VIEW_ID == 0u ? leftViewMatrix : rightViewMatrix;
+//mat4 projectionMatrixEye = VIEW_ID == 0u ? leftProjectionMatrix : rightProjectionMatrix;
 
 //viewMatrixEye = leftViewMatrix;
 //projectionMatrixEye = leftProjectionMatrix;
