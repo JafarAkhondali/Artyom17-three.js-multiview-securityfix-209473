@@ -7,6 +7,7 @@
 
 var WEBVR = {
 	attributes: {
+    antialias: true,
 		depth: true,
 		multiview: true		
 	},
@@ -32,7 +33,7 @@ var WEBVR = {
 			button.onmouseenter = function () { button.style.opacity = '1.0'; };
 			button.onmouseleave = function () { button.style.opacity = '0.5'; };
 
-			var attributes = this.attributes;
+			var attributes = this.WEBVR.attributes;
 
 			button.onclick = function () {
 

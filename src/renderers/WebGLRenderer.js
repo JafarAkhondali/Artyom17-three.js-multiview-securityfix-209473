@@ -1209,23 +1209,26 @@ function WebGLRenderer( parameters ) {
 					var viewport = view.getViewport();
 
           //!AB @TODO: consider to use WHOLE viewport here, not only W/H!!!
-					if (multiview && (!renderTargetMultiview || renderTargetMultiview.width != viewport.width || renderTargetMultiview.height != viewport.height)) {
+					if (multiview) {
+            if ((!renderTargetMultiview || renderTargetMultiview.width != viewport.width || renderTargetMultiview.height != viewport.height)) {
 
-						renderTargetMultiview = new WebGLRenderTargetMultiview(viewport.width, viewport.height, {
+  						renderTargetMultiview = new WebGLRenderTargetMultiview(viewport.width, viewport.height, {
 
-							webglFramebuffer: view.framebuffer
+							  webglFramebuffer: view.framebuffer
 
-						});
+						  });
 
-						renderTargetMultiview.scissorTest = true;
-
-					}
-
+						  renderTargetMultiview.scissorTest = true;
+					  }
+      		} else {
+            renderTargetMultiview = null;
+          }
 				}
 
 				renderTarget = renderTargetMultiview;
-
-			}
+			} else {
+        renderTargetMultiview = null;
+      }
 		}
 
 		this.setRenderTarget( renderTarget );
