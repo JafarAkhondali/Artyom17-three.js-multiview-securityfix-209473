@@ -365,7 +365,8 @@ function WebGLRenderer( parameters ) {
 
 	if ( typeof navigator !== 'undefined' ) {
 
-		vr = ( 'xr' in navigator ) ? new WebXRManager( _this ) : new WebVRManager( _this );
+		//!AB: disabling WebXR: vr = ( 'xr' in navigator ) ? new WebXRManager( _this ) : new WebVRManager( _this );
+		vr = new WebVRManager( _this );
 
 	}
 
