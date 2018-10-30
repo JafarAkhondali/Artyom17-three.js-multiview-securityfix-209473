@@ -580,6 +580,7 @@ function WebGLProgram( renderer, extensions, code, material, shader, parameters,
 							#define texture2D texture
 							#extension GL_OVR_multiview : require
 							#define VIEW_ID gl_ViewID_OVR
+              #define LEFT_EYE_VIEW_ID 0u
 							layout(num_views=2) in;
 							#define GL2\n`;
 
@@ -602,7 +603,7 @@ function WebGLProgram( renderer, extensions, code, material, shader, parameters,
 		fragmentGlsl = '#version 300 es\n' + gles3PS + fragmentGlsl;
 
 	} else {
-    vertexGlsl = prefixVertex + '#define VIEW_ID 0\n' + vertexShader;
+    vertexGlsl = prefixVertex + '#define VIEW_ID 0\n' + '#define LEFT_EYE_VIEW_ID 0\n' + vertexShader;
   }
 
 //	console.log( '*VERTEX*', vertexGlsl );

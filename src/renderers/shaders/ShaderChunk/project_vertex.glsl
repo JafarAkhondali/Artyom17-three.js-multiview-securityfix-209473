@@ -1,5 +1,5 @@
-mat4 viewMatrixEye = isMultiview ? (VIEW_ID == 0u ? leftViewMatrix : rightViewMatrix) : viewMatrix;
-mat4 projectionMatrixEye = isMultiview ? (VIEW_ID == 0u ? leftProjectionMatrix : rightProjectionMatrix) : projectionMatrix;
+mat4 viewMatrixEye = isMultiview ? (VIEW_ID == LEFT_EYE_VIEW_ID ? leftViewMatrix : rightViewMatrix) : viewMatrix;
+mat4 projectionMatrixEye = isMultiview ? (VIEW_ID == LEFT_EYE_VIEW_ID ? leftProjectionMatrix : rightProjectionMatrix) : projectionMatrix;
 
 //mat4 viewMatrixEye = (VIEW_ID == 0u ? leftViewMatrix : rightViewMatrix;
 //mat4 projectionMatrixEye = VIEW_ID == 0u ? leftProjectionMatrix : rightProjectionMatrix;
