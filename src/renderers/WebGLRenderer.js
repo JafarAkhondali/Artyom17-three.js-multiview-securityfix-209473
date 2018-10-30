@@ -48,6 +48,7 @@ import {
 	TriangleFanDrawMode,
 	TriangleStripDrawMode,
 	TrianglesDrawMode,
+  LinearFilter,
 	LinearToneMapping,
 	BackSide
 } from '../constants.js';
@@ -83,6 +84,8 @@ import { WebGLUniforms } from './webgl/WebGLUniforms.js';
 import { WebGLUtils } from './webgl/WebGLUtils.js';
 import { WebVRManager } from './webvr/WebVRManager.js';
 import { WebXRManager } from './webvr/WebXRManager.js';
+
+import { Texture } from '../textures/Texture.js';
 
 /**
  * @author supereggbert / http://www.paulbrunt.co.uk/
@@ -1207,8 +1210,8 @@ function WebGLRenderer( parameters ) {
 					var multiview = view.getAttributes().multiview;
 					var viewport = view.getViewport();
 
-                    //!AB @TODO: consider to use WHOLE viewport here, not only W/H!!!
-					if ( ! renderTargetMultiview || renderTargetMultiview.width != viewport.width || renderTargetMultiview.height != viewport.height) {
+          //!AB @TODO: consider to use WHOLE viewport here, not only W/H!!!
+					if (multiview && (!renderTargetMultiview || renderTargetMultiview.width != viewport.width || renderTargetMultiview.height != viewport.height)) {
 
 						renderTargetMultiview = new WebGLRenderTargetMultiview(viewport.width, viewport.height, {
 
