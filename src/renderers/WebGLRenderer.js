@@ -1470,7 +1470,7 @@ function WebGLRenderer( parameters ) {
 			var material = overrideMaterial === undefined ? renderItem.material : overrideMaterial;
 			var group = renderItem.group;
 
-			//!AB: if ( camera.isArrayCamera ) {
+			if ( camera.isArrayCamera ) {
 
 				_currentArrayCamera = camera;
 
@@ -1507,13 +1507,13 @@ function WebGLRenderer( parameters ) {
 
 				}
 
-			/*!AB: } else {
+			} else {
 
 				_currentArrayCamera = null;
 
 				renderObject( object, scene, camera, geometry, material, group );
 
-			}*/
+			}
 
 		}
 
