@@ -87,6 +87,7 @@ function WebGLCapabilities( gl, extensions, parameters ) {
 	return {
 
 		isWebGL2: isWebGL2,
+		isESSL3: isWebGL2, //!AB: might be set later, see WebGLRenderer
 
 		getMaxAnisotropy: getMaxAnisotropy,
 		getMaxPrecision: getMaxPrecision,

@@ -285,7 +285,7 @@ function WebGLProgram( renderer, extensions, code, material, shader, parameters,
 
 	//
 
-	var customExtensions = capabilities.isWebGL2 ? '' : generateExtensions( material.extensions, parameters, extensions );
+	var customExtensions = (capabilities.isWebGL2 || capabilities.isESSL3 ) ? '' : generateExtensions( material.extensions, parameters, extensions );
 
 	var customDefines = generateDefines( defines );
 
@@ -373,7 +373,7 @@ function WebGLProgram( renderer, extensions, code, material, shader, parameters,
 			parameters.sizeAttenuation ? '#define USE_SIZEATTENUATION' : '',
 
 			parameters.logarithmicDepthBuffer ? '#define USE_LOGDEPTHBUF' : '',
-			parameters.logarithmicDepthBuffer && ( capabilities.isWebGL2 || extensions.get( 'EXT_frag_depth' ) ) ? '#define USE_LOGDEPTHBUF_EXT' : '',
+			parameters.logarithmicDepthBuffer && ( capabilities.isWebGL2 || capabilities.isESSL3 || extensions.get( 'EXT_frag_depth' ) ) ? '#define USE_LOGDEPTHBUF_EXT' : '',
 
 			'uniform mat4 modelMatrix;',
 			'uniform mat4 modelViewMatrix;',
@@ -484,9 +484,9 @@ function WebGLProgram( renderer, extensions, code, material, shader, parameters,
 			parameters.physicallyCorrectLights ? '#define PHYSICALLY_CORRECT_LIGHTS' : '',
 
 			parameters.logarithmicDepthBuffer ? '#define USE_LOGDEPTHBUF' : '',
-			parameters.logarithmicDepthBuffer && ( capabilities.isWebGL2 || extensions.get( 'EXT_frag_depth' ) ) ? '#define USE_LOGDEPTHBUF_EXT' : '',
+			parameters.logarithmicDepthBuffer && ( capabilities.isWebGL2 || capabilities.isESSL3 || extensions.get( 'EXT_frag_depth' ) ) ? '#define USE_LOGDEPTHBUF_EXT' : '',
 
-			parameters.envMap && ( capabilities.isWebGL2 || extensions.get( 'EXT_shader_texture_lod' ) ) ? '#define TEXTURE_LOD_EXT' : '',
+			parameters.envMap && ( capabilities.isWebGL2 || capabilities.isESSL3 || extensions.get( 'EXT_shader_texture_lod' ) ) ? '#define TEXTURE_LOD_EXT' : '',
 
 			'uniform mat4 viewMatrix;',
 			'uniform vec3 cameraPosition;',
@@ -597,6 +597,7 @@ function WebGLProgram( renderer, extensions, code, material, shader, parameters,
 							#define texture2DProjGradEXT textureProjGrad
 							#define textureCubeGradEXT textureGrad
 
+							#define sample sample_var
 							#define GL2\n`;
 
 		vertexGlsl = '#version 300 es\n' + gles3VS + vertexGlsl;

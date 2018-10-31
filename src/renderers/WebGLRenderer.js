@@ -268,15 +268,15 @@ function WebGLRenderer( parameters ) {
 		}
 		// _gl = WebGLDebugUtils.makeDebugContext(_gl, undefined, logGLCall);
 
-    var ext = _gl.getExtension('WEBGL_multiview'); //!AB MV
-    if (ext) {
-      console.log("MULTIVIEW extension is supported");
-      this.multiviewSupported = true;
-    }
-    else {
-      console.log("MULTIVIEW extension is NOT supported");
-      this.multiviewSupported = false;
-    }
+		var ext = _gl.getExtension('WEBGL_multiview'); //!AB MV
+		if (ext) {
+			console.log("MULTIVIEW extension is supported");
+			this.multiviewSupported = true;
+		}
+		else {
+			console.log("MULTIVIEW extension is NOT supported");
+			this.multiviewSupported = false;
+		}
 
 		// Some experimental-webgl implementations do not have getShaderPrecisionFormat
 
@@ -303,12 +303,15 @@ function WebGLRenderer( parameters ) {
 	var background, morphtargets, bufferRenderer, indexedBufferRenderer;
 
 	var utils;
+	var isMultiviewSupported = this.multiviewSupported; //!AB 
 
 	function initGLContext() {
 
 		extensions = new WebGLExtensions( _gl );
 
 		capabilities = new WebGLCapabilities( _gl, extensions, parameters );
+
+		capabilities.isESSL3 = isMultiviewSupported; //!AB
 
 		if ( ! capabilities.isWebGL2 ) {
 
@@ -1208,27 +1211,27 @@ function WebGLRenderer( parameters ) {
 					var multiview = view.getAttributes().multiview;
 					var viewport = view.getViewport();
 
-          //!AB @TODO: consider to use WHOLE viewport here, not only W/H!!!
+					//!AB @TODO: consider to use WHOLE viewport here, not only W/H!!!
 					if (multiview) {
-            if ((!renderTargetMultiview || renderTargetMultiview.width != viewport.width || renderTargetMultiview.height != viewport.height)) {
+						if ((!renderTargetMultiview || renderTargetMultiview.width != viewport.width || renderTargetMultiview.height != viewport.height)) {
 
   						renderTargetMultiview = new WebGLRenderTargetMultiview(viewport.width, viewport.height, {
 
-							  webglFramebuffer: view.framebuffer
+								webglFramebuffer: view.framebuffer
 
-						  });
+							});
 
-						  renderTargetMultiview.scissorTest = true;
-					  }
+							renderTargetMultiview.scissorTest = true;
+						}
       		} else {
-            renderTargetMultiview = null;
-          }
+						renderTargetMultiview = null;
+					}
 				}
 
 				renderTarget = renderTargetMultiview;
 			} else {
-        renderTargetMultiview = null;
-      }
+				renderTargetMultiview = null;
+			}
 		}
 
 		this.setRenderTarget( renderTarget );
