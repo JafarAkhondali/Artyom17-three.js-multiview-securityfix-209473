@@ -4702,7 +4702,11 @@ WebGLRenderTarget.prototype = Object.assign( Object.create( EventDispatcher.prot
 
 		this.viewport.copy( source.viewport );
 
-		this.texture = source.texture.clone();
+		if ( source.texture ) {
+
+			this.texture = source.texture.clone();
+
+		}
 
 		this.depthBuffer = source.depthBuffer;
 		this.stencilBuffer = source.stencilBuffer;
@@ -6028,13 +6032,13 @@ var encodings_fragment = "  gl_FragColor = linearToOutputTexel( gl_FragColor );\
 
 var encodings_pars_fragment = "\nvec4 LinearToLinear( in vec4 value ) {\n\treturn value;\n}\nvec4 GammaToLinear( in vec4 value, in float gammaFactor ) {\n\treturn vec4( pow( value.rgb, vec3( gammaFactor ) ), value.a );\n}\nvec4 LinearToGamma( in vec4 value, in float gammaFactor ) {\n\treturn vec4( pow( value.rgb, vec3( 1.0 / gammaFactor ) ), value.a );\n}\nvec4 sRGBToLinear( in vec4 value ) {\n\treturn vec4( mix( pow( value.rgb * 0.9478672986 + vec3( 0.0521327014 ), vec3( 2.4 ) ), value.rgb * 0.0773993808, vec3( lessThanEqual( value.rgb, vec3( 0.04045 ) ) ) ), value.a );\n}\nvec4 LinearTosRGB( in vec4 value ) {\n\treturn vec4( mix( pow( value.rgb, vec3( 0.41666 ) ) * 1.055 - vec3( 0.055 ), value.rgb * 12.92, vec3( lessThanEqual( value.rgb, vec3( 0.0031308 ) ) ) ), value.a );\n}\nvec4 RGBEToLinear( in vec4 value ) {\n\treturn vec4( value.rgb * exp2( value.a * 255.0 - 128.0 ), 1.0 );\n}\nvec4 LinearToRGBE( in vec4 value ) {\n\tfloat maxComponent = max( max( value.r, value.g ), value.b );\n\tfloat fExp = clamp( ceil( log2( maxComponent ) ), -128.0, 127.0 );\n\treturn vec4( value.rgb / exp2( fExp ), ( fExp + 128.0 ) / 255.0 );\n}\nvec4 RGBMToLinear( in vec4 value, in float maxRange ) {\n\treturn vec4( value.rgb * value.a * maxRange, 1.0 );\n}\nvec4 LinearToRGBM( in vec4 value, in float maxRange ) {\n\tfloat maxRGB = max( value.r, max( value.g, value.b ) );\n\tfloat M = clamp( maxRGB / maxRange, 0.0, 1.0 );\n\tM = ceil( M * 255.0 ) / 255.0;\n\treturn vec4( value.rgb / ( M * maxRange ), M );\n}\nvec4 RGBDToLinear( in vec4 value, in float maxRange ) {\n\treturn vec4( value.rgb * ( ( maxRange / 255.0 ) / value.a ), 1.0 );\n}\nvec4 LinearToRGBD( in vec4 value, in float maxRange ) {\n\tfloat maxRGB = max( value.r, max( value.g, value.b ) );\n\tfloat D = max( maxRange / maxRGB, 1.0 );\n\tD = min( floor( D ) / 255.0, 1.0 );\n\treturn vec4( value.rgb * ( D * ( 255.0 / maxRange ) ), D );\n}\nconst mat3 cLogLuvM = mat3( 0.2209, 0.3390, 0.4184, 0.1138, 0.6780, 0.7319, 0.0102, 0.1130, 0.2969 );\nvec4 LinearToLogLuv( in vec4 value )  {\n\tvec3 Xp_Y_XYZp = value.rgb * cLogLuvM;\n\tXp_Y_XYZp = max( Xp_Y_XYZp, vec3( 1e-6, 1e-6, 1e-6 ) );\n\tvec4 vResult;\n\tvResult.xy = Xp_Y_XYZp.xy / Xp_Y_XYZp.z;\n\tfloat Le = 2.0 * log2(Xp_Y_XYZp.y) + 127.0;\n\tvResult.w = fract( Le );\n\tvResult.z = ( Le - ( floor( vResult.w * 255.0 ) ) / 255.0 ) / 255.0;\n\treturn vResult;\n}\nconst mat3 cLogLuvInverseM = mat3( 6.0014, -2.7008, -1.7996, -1.3320, 3.1029, -5.7721, 0.3008, -1.0882, 5.6268 );\nvec4 LogLuvToLinear( in vec4 value ) {\n\tfloat Le = value.z * 255.0 + value.w;\n\tvec3 Xp_Y_XYZp;\n\tXp_Y_XYZp.y = exp2( ( Le - 127.0 ) / 2.0 );\n\tXp_Y_XYZp.z = Xp_Y_XYZp.y / value.y;\n\tXp_Y_XYZp.x = value.x * Xp_Y_XYZp.z;\n\tvec3 vRGB = Xp_Y_XYZp.rgb * cLogLuvInverseM;\n\treturn vec4( max( vRGB, 0.0 ), 1.0 );\n}\n";
 
-var envmap_fragment = "#ifdef USE_ENVMAP\n\t#if defined( USE_BUMPMAP ) || defined( USE_NORMALMAP ) || defined( PHONG )\n\t\tvec3 cameraToVertex = normalize( vWorldPosition - cameraPosition );\n\t\tvec3 worldNormal = inverseTransformDirection( normal, viewMatrix );\n\t\t#ifdef ENVMAP_MODE_REFLECTION\n\t\t\tvec3 reflectVec = reflect( cameraToVertex, worldNormal );\n\t\t#else\n\t\t\tvec3 reflectVec = refract( cameraToVertex, worldNormal, refractionRatio );\n\t\t#endif\n\t#else\n\t\tvec3 reflectVec = vReflect;\n\t#endif\n\t#ifdef ENVMAP_TYPE_CUBE\n\t\tvec4 envColor = textureCube( envMap, vec3( flipEnvMap * reflectVec.x, reflectVec.yz ) );\n\t#elif defined( ENVMAP_TYPE_EQUIREC )\n\t\tvec2 sampleUV;\n\t\treflectVec = normalize( reflectVec );\n\t\tsampleUV.y = asin( clamp( reflectVec.y, - 1.0, 1.0 ) ) * RECIPROCAL_PI + 0.5;\n\t\tsampleUV.x = atan( reflectVec.z, reflectVec.x ) * RECIPROCAL_PI2 + 0.5;\n\t\tvec4 envColor = texture2D( envMap, sampleUV );\n\t#elif defined( ENVMAP_TYPE_SPHERE )\n\t\treflectVec = normalize( reflectVec );\n\t\tvec3 reflectView = normalize( ( viewMatrix * vec4( reflectVec, 0.0 ) ).xyz + vec3( 0.0, 0.0, 1.0 ) );\n\t\tvec4 envColor = texture2D( envMap, reflectView.xy * 0.5 + 0.5 );\n\t#else\n\t\tvec4 envColor = vec4( 0.0 );\n\t#endif\n\tenvColor = envMapTexelToLinear( envColor );\n\t#ifdef ENVMAP_BLENDING_MULTIPLY\n\t\toutgoingLight = mix( outgoingLight, outgoingLight * envColor.xyz, specularStrength * reflectivity );\n\t#elif defined( ENVMAP_BLENDING_MIX )\n\t\toutgoingLight = mix( outgoingLight, envColor.xyz, specularStrength * reflectivity );\n\t#elif defined( ENVMAP_BLENDING_ADD )\n\t\toutgoingLight += envColor.xyz * specularStrength * reflectivity;\n\t#endif\n#endif\n";
+var envmap_fragment = "#ifdef USE_ENVMAP\n\t#if defined( USE_BUMPMAP ) || defined( USE_NORMALMAP ) || defined( PHONG )\n\t\tvec3 cameraToVertex = normalize( vWorldPosition - cameraPosition );\n\t\tvec3 worldNormal = inverseTransformDirection( normal, viewMatrixEye );\n\t\t#ifdef ENVMAP_MODE_REFLECTION\n\t\t\tvec3 reflectVec = reflect( cameraToVertex, worldNormal );\n\t\t#else\n\t\t\tvec3 reflectVec = refract( cameraToVertex, worldNormal, refractionRatio );\n\t\t#endif\n\t#else\n\t\tvec3 reflectVec = vReflect;\n\t#endif\n\t#ifdef ENVMAP_TYPE_CUBE\n\t\tvec4 envColor = textureCube( envMap, vec3( flipEnvMap * reflectVec.x, reflectVec.yz ) );\n\t#elif defined( ENVMAP_TYPE_EQUIREC )\n\t\tvec2 sampleUV;\n\t\treflectVec = normalize( reflectVec );\n\t\tsampleUV.y = asin( clamp( reflectVec.y, - 1.0, 1.0 ) ) * RECIPROCAL_PI + 0.5;\n\t\tsampleUV.x = atan( reflectVec.z, reflectVec.x ) * RECIPROCAL_PI2 + 0.5;\n\t\tvec4 envColor = texture2D( envMap, sampleUV );\n\t#elif defined( ENVMAP_TYPE_SPHERE )\n\t\treflectVec = normalize( reflectVec );\n\t\tvec3 reflectView = normalize( ( viewMatrixEye * vec4( reflectVec, 0.0 ) ).xyz + vec3( 0.0, 0.0, 1.0 ) );\n\t\tvec4 envColor = texture2D( envMap, reflectView.xy * 0.5 + 0.5 );\n\t#else\n\t\tvec4 envColor = vec4( 0.0 );\n\t#endif\n\tenvColor = envMapTexelToLinear( envColor );\n\t#ifdef ENVMAP_BLENDING_MULTIPLY\n\t\toutgoingLight = mix( outgoingLight, outgoingLight * envColor.xyz, specularStrength * reflectivity );\n\t#elif defined( ENVMAP_BLENDING_MIX )\n\t\toutgoingLight = mix( outgoingLight, envColor.xyz, specularStrength * reflectivity );\n\t#elif defined( ENVMAP_BLENDING_ADD )\n\t\toutgoingLight += envColor.xyz * specularStrength * reflectivity;\n\t#endif\n#endif\n";
 
 var envmap_pars_fragment = "#if defined( USE_ENVMAP ) || defined( PHYSICAL )\n\tuniform float reflectivity;\n\tuniform float envMapIntensity;\n#endif\n#ifdef USE_ENVMAP\n\t#if ! defined( PHYSICAL ) && ( defined( USE_BUMPMAP ) || defined( USE_NORMALMAP ) || defined( PHONG ) )\n\t\tvarying vec3 vWorldPosition;\n\t#endif\n\t#ifdef ENVMAP_TYPE_CUBE\n\t\tuniform samplerCube envMap;\n\t#else\n\t\tuniform sampler2D envMap;\n\t#endif\n\tuniform float flipEnvMap;\n\tuniform int maxMipLevel;\n\t#if defined( USE_BUMPMAP ) || defined( USE_NORMALMAP ) || defined( PHONG ) || defined( PHYSICAL )\n\t\tuniform float refractionRatio;\n\t#else\n\t\tvarying vec3 vReflect;\n\t#endif\n#endif\n";
 
 var envmap_pars_vertex = "#ifdef USE_ENVMAP\n\t#if defined( USE_BUMPMAP ) || defined( USE_NORMALMAP ) || defined( PHONG )\n\t\tvarying vec3 vWorldPosition;\n\t#else\n\t\tvarying vec3 vReflect;\n\t\tuniform float refractionRatio;\n\t#endif\n#endif\n";
 
-var envmap_vertex = "#ifdef USE_ENVMAP\n\t#if defined( USE_BUMPMAP ) || defined( USE_NORMALMAP ) || defined( PHONG )\n\t\tvWorldPosition = worldPosition.xyz;\n\t#else\n\t\tvec3 cameraToVertex = normalize( worldPosition.xyz - cameraPosition );\n\t\tvec3 worldNormal = inverseTransformDirection( transformedNormal, viewMatrix );\n\t\t#ifdef ENVMAP_MODE_REFLECTION\n\t\t\tvReflect = reflect( cameraToVertex, worldNormal );\n\t\t#else\n\t\t\tvReflect = refract( cameraToVertex, worldNormal, refractionRatio );\n\t\t#endif\n\t#endif\n#endif\n";
+var envmap_vertex = "#ifdef USE_ENVMAP\n\t#if defined( USE_BUMPMAP ) || defined( USE_NORMALMAP ) || defined( PHONG )\n\t\tvWorldPosition = worldPosition.xyz;\n\t#else\n\t\tvec3 cameraToVertex = normalize( worldPosition.xyz - cameraPosition );\n\t\tvec3 worldNormal = inverseTransformDirection( transformedNormal, viewMatrixEye );\n\t\t#ifdef ENVMAP_MODE_REFLECTION\n\t\t\tvReflect = reflect( cameraToVertex, worldNormal );\n\t\t#else\n\t\t\tvReflect = refract( cameraToVertex, worldNormal, refractionRatio );\n\t\t#endif\n\t#endif\n#endif\n";
 
 var fog_vertex = "#ifdef USE_FOG\n\tfogDepth = -mvPosition.z;\n#endif\n";
 
@@ -6106,7 +6110,7 @@ var packing = "vec3 packNormalToRGB( const in vec3 normal ) {\n\treturn normaliz
 
 var premultiplied_alpha_fragment = "#ifdef PREMULTIPLIED_ALPHA\n\tgl_FragColor.rgb *= gl_FragColor.a;\n#endif\n";
 
-var project_vertex = "vec4 mvPosition = modelViewMatrix * vec4( transformed, 1.0 );\ngl_Position = projectionMatrix * mvPosition;\n";
+var project_vertex = "mat4 viewMatrixEye = isMultiview ? (VIEW_ID == LEFT_EYE_VIEW_ID ? leftViewMatrix : rightViewMatrix) : viewMatrix;\nmat4 projectionMatrixEye = isMultiview ? (VIEW_ID == LEFT_EYE_VIEW_ID ? leftProjectionMatrix : rightProjectionMatrix) : projectionMatrix;\nvec4 mvPosition = viewMatrixEye * modelMatrix * vec4( transformed, 1.0 );\ngl_Position = projectionMatrixEye * mvPosition;\n";
 
 var dithering_fragment = "#if defined( DITHERING )\n  gl_FragColor.rgb = dithering( gl_FragColor.rgb );\n#endif\n";
 
@@ -6176,7 +6180,7 @@ var equirect_vert = "varying vec3 vWorldPosition;\n#include <common>\nvoid main(
 
 var linedashed_frag = "uniform vec3 diffuse;\nuniform float opacity;\nuniform float dashSize;\nuniform float totalSize;\nvarying float vLineDistance;\n#include <common>\n#include <color_pars_fragment>\n#include <fog_pars_fragment>\n#include <logdepthbuf_pars_fragment>\n#include <clipping_planes_pars_fragment>\nvoid main() {\n\t#include <clipping_planes_fragment>\n\tif ( mod( vLineDistance, totalSize ) > dashSize ) {\n\t\tdiscard;\n\t}\n\tvec3 outgoingLight = vec3( 0.0 );\n\tvec4 diffuseColor = vec4( diffuse, opacity );\n\t#include <logdepthbuf_fragment>\n\t#include <color_fragment>\n\toutgoingLight = diffuseColor.rgb;\n\tgl_FragColor = vec4( outgoingLight, diffuseColor.a );\n\t#include <premultiplied_alpha_fragment>\n\t#include <tonemapping_fragment>\n\t#include <encodings_fragment>\n\t#include <fog_fragment>\n}\n";
 
-var linedashed_vert = "uniform float scale;\nattribute float lineDistance;\nvarying float vLineDistance;\n#include <common>\n#include <color_pars_vertex>\n#include <fog_pars_vertex>\n#include <logdepthbuf_pars_vertex>\n#include <clipping_planes_pars_vertex>\nvoid main() {\n\t#include <color_vertex>\n\tvLineDistance = scale * lineDistance;\n\tvec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );\n\tgl_Position = projectionMatrix * mvPosition;\n\t#include <logdepthbuf_vertex>\n\t#include <clipping_planes_vertex>\n\t#include <fog_vertex>\n}\n";
+var linedashed_vert = "uniform float scale;\nattribute float lineDistance;\nvarying float vLineDistance;\n#include <common>\n#include <color_pars_vertex>\n#include <fog_pars_vertex>\n#include <logdepthbuf_pars_vertex>\n#include <clipping_planes_pars_vertex>\nvoid main() {\n\t#include <color_vertex>\n\tvLineDistance = scale * lineDistance;\n\tvec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );\n\tgl_Position = projectionMatrixEye * mvPosition;\n\t#include <logdepthbuf_vertex>\n\t#include <clipping_planes_vertex>\n\t#include <fog_vertex>\n}\n";
 
 var meshbasic_frag = "uniform vec3 diffuse;\nuniform float opacity;\n#ifndef FLAT_SHADED\n\tvarying vec3 vNormal;\n#endif\n#include <common>\n#include <color_pars_fragment>\n#include <uv_pars_fragment>\n#include <uv2_pars_fragment>\n#include <map_pars_fragment>\n#include <alphamap_pars_fragment>\n#include <aomap_pars_fragment>\n#include <lightmap_pars_fragment>\n#include <envmap_pars_fragment>\n#include <fog_pars_fragment>\n#include <specularmap_pars_fragment>\n#include <logdepthbuf_pars_fragment>\n#include <clipping_planes_pars_fragment>\nvoid main() {\n\t#include <clipping_planes_fragment>\n\tvec4 diffuseColor = vec4( diffuse, opacity );\n\t#include <logdepthbuf_fragment>\n\t#include <map_fragment>\n\t#include <color_fragment>\n\t#include <alphamap_fragment>\n\t#include <alphatest_fragment>\n\t#include <specularmap_fragment>\n\tReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );\n\t#ifdef USE_LIGHTMAP\n\t\treflectedLight.indirectDiffuse += texture2D( lightMap, vUv2 ).xyz * lightMapIntensity;\n\t#else\n\t\treflectedLight.indirectDiffuse += vec3( 1.0 );\n\t#endif\n\t#include <aomap_fragment>\n\treflectedLight.indirectDiffuse *= diffuseColor.rgb;\n\tvec3 outgoingLight = reflectedLight.indirectDiffuse;\n\t#include <envmap_fragment>\n\tgl_FragColor = vec4( outgoingLight, diffuseColor.a );\n\t#include <premultiplied_alpha_fragment>\n\t#include <tonemapping_fragment>\n\t#include <encodings_fragment>\n\t#include <fog_fragment>\n}\n";
 
@@ -14866,6 +14870,7 @@ function WebGLCapabilities( gl, extensions, parameters ) {
 	return {
 
 		isWebGL2: isWebGL2,
+		isESSL3: isWebGL2, //!AB: might be set later, see WebGLRenderer
 
 		getMaxAnisotropy: getMaxAnisotropy,
 		getMaxPrecision: getMaxPrecision,
@@ -16857,7 +16862,7 @@ function WebGLProgram( renderer, extensions, code, material, shader, parameters,
 
 	//
 
-	var customExtensions = capabilities.isWebGL2 ? '' : generateExtensions( material.extensions, parameters, extensions );
+	var customExtensions = (capabilities.isWebGL2 || capabilities.isESSL3 ) ? '' : generateExtensions( material.extensions, parameters, extensions );
 
 	var customDefines = generateDefines( defines );
 
@@ -16945,7 +16950,7 @@ function WebGLProgram( renderer, extensions, code, material, shader, parameters,
 			parameters.sizeAttenuation ? '#define USE_SIZEATTENUATION' : '',
 
 			parameters.logarithmicDepthBuffer ? '#define USE_LOGDEPTHBUF' : '',
-			parameters.logarithmicDepthBuffer && ( capabilities.isWebGL2 || extensions.get( 'EXT_frag_depth' ) ) ? '#define USE_LOGDEPTHBUF_EXT' : '',
+			parameters.logarithmicDepthBuffer && ( capabilities.isWebGL2 || capabilities.isESSL3 || extensions.get( 'EXT_frag_depth' ) ) ? '#define USE_LOGDEPTHBUF_EXT' : '',
 
 			'uniform mat4 modelMatrix;',
 			'uniform mat4 modelViewMatrix;',
@@ -16953,6 +16958,12 @@ function WebGLProgram( renderer, extensions, code, material, shader, parameters,
 			'uniform mat4 viewMatrix;',
 			'uniform mat3 normalMatrix;',
 			'uniform vec3 cameraPosition;',
+
+			'uniform bool isMultiview;',
+			'uniform mat4 leftViewMatrix;',
+			'uniform mat4 rightViewMatrix;',
+			'uniform mat4 leftProjectionMatrix;',
+			'uniform mat4 rightProjectionMatrix;',
 
 			'attribute vec3 position;',
 			'attribute vec3 normal;',
@@ -17050,9 +17061,9 @@ function WebGLProgram( renderer, extensions, code, material, shader, parameters,
 			parameters.physicallyCorrectLights ? '#define PHYSICALLY_CORRECT_LIGHTS' : '',
 
 			parameters.logarithmicDepthBuffer ? '#define USE_LOGDEPTHBUF' : '',
-			parameters.logarithmicDepthBuffer && ( capabilities.isWebGL2 || extensions.get( 'EXT_frag_depth' ) ) ? '#define USE_LOGDEPTHBUF_EXT' : '',
+			parameters.logarithmicDepthBuffer && ( capabilities.isWebGL2 || capabilities.isESSL3 || extensions.get( 'EXT_frag_depth' ) ) ? '#define USE_LOGDEPTHBUF_EXT' : '',
 
-			parameters.envMap && ( capabilities.isWebGL2 || extensions.get( 'EXT_shader_texture_lod' ) ) ? '#define TEXTURE_LOD_EXT' : '',
+			parameters.envMap && ( capabilities.isWebGL2 || capabilities.isESSL3 || extensions.get( 'EXT_shader_texture_lod' ) ) ? '#define TEXTURE_LOD_EXT' : '',
 
 			'uniform mat4 viewMatrix;',
 			'uniform vec3 cameraPosition;',
@@ -17137,8 +17148,44 @@ function WebGLProgram( renderer, extensions, code, material, shader, parameters,
 	var vertexGlsl = prefixVertex + vertexShader;
 	var fragmentGlsl = prefixFragment + fragmentShader;
 
-	// console.log( '*VERTEX*', vertexGlsl );
-	// console.log( '*FRAGMENT*', fragmentGlsl );
+	//!AB: forcing ES3 shaders for multiview 
+	if ( renderer.multiviewSupported ) {
+
+		//@todo Detect version and skip it
+		var gles3VS = `#define attribute in
+							#define varying out
+							#define texture2D texture
+							#extension GL_OVR_multiview : require
+							#define VIEW_ID gl_ViewID_OVR
+              #define LEFT_EYE_VIEW_ID 0u
+							layout(num_views=2) in;
+							#define GL2\n`;
+
+		var gles3PS = `#define varying in
+							out highp vec4 pc_fragColor;
+							#define gl_FragColor pc_fragColor
+							#define texture2D texture
+							#define textureCube texture
+							#define texture2DProj textureProj
+							#define texture2DLodEXT textureLod
+							#define texture2DProjLodEXT textureProjLod
+							#define textureCubeLodEXT textureLod
+							#define texture2DGradEXT textureGrad
+							#define texture2DProjGradEXT textureProjGrad
+							#define textureCubeGradEXT textureGrad
+
+							#define sample sample_var
+							#define GL2\n`;
+
+		vertexGlsl = '#version 300 es\n' + gles3VS + vertexGlsl;
+		fragmentGlsl = '#version 300 es\n' + gles3PS + fragmentGlsl;
+
+	} else {
+    vertexGlsl = prefixVertex + '#define VIEW_ID 0\n' + '#define LEFT_EYE_VIEW_ID 0\n' + vertexShader;
+  }
+
+//	console.log( '*VERTEX*', vertexGlsl );
+//	console.log( '*FRAGMENT*', fragmentGlsl );
 
 	var glVertexShader = WebGLShader( gl, gl.VERTEX_SHADER, vertexGlsl );
 	var glFragmentShader = WebGLShader( gl, gl.FRAGMENT_SHADER, fragmentGlsl );
@@ -20705,6 +20752,8 @@ function WebGLTextures( _gl, extensions, state, properties, capabilities, utils,
 	function updateRenderTargetMipmap( renderTarget ) {
 
 		var texture = renderTarget.texture;
+		if ( ! texture ) return;
+
 		var isTargetPowerOfTwo = isPowerOfTwo( renderTarget );
 
 		if ( textureNeedsGenerateMipmaps( texture, isTargetPowerOfTwo ) ) {
@@ -21321,7 +21370,14 @@ function WebVRManager( renderer ) {
 			currentPixelRatio = renderer.getPixelRatio();
 			currentSize = renderer.getSize();
 
-			renderer.setDrawingBufferSize( renderWidth * 2, renderHeight, 1 );
+            var num_views = 2;
+            var views = device.getViews ? device.getViews() : [];
+            if (views.length > 0) {
+              var view = views[0];
+              num_views = (view.getAttributes().multiview) ? 1 : 2;
+              console.log("onVRPresentChange, presenting, multiview = " + ((num_views == 1) ? true : false));
+            }
+			renderer.setDrawingBufferSize( renderWidth * num_views, renderHeight, 1 );
 
 			animation.start();
 
@@ -21469,6 +21525,31 @@ function WebVRManager( renderer ) {
 
 		if ( object !== undefined ) poseTarget = object;
 
+	};
+
+	this.getViews = function () {
+
+		if ( device !== null && device.getViews ) {
+
+			return device.getViews() || [];
+
+		}
+
+		return [];
+
+	};
+
+	this.hasMultiviewSupport = function () {
+
+		var views = this.getViews();
+
+		if ( views.length > 0 ) {
+
+			return views[ 0 ].getAttributes().multiview;
+
+		}
+
+		return false;
 	};
 
 	this.getCamera = function ( camera ) {
@@ -21650,296 +21731,45 @@ function WebVRManager( renderer ) {
  * @author mrdoob / http://mrdoob.com/
  */
 
-function WebXRManager( renderer ) {
-
-	var gl = renderer.context;
-
-	var device = null;
-	var session = null;
-
-	var frameOfReference = null;
-	var frameOfReferenceType = 'stage';
-
-	var pose = null;
-
-	var controllers = [];
-	var inputSources = [];
-
-	function isPresenting() {
-
-		return session !== null && frameOfReference !== null;
-
-	}
-
-	//
-
-	var cameraL = new PerspectiveCamera();
-	cameraL.layers.enable( 1 );
-	cameraL.viewport = new Vector4();
-
-	var cameraR = new PerspectiveCamera();
-	cameraR.layers.enable( 2 );
-	cameraR.viewport = new Vector4();
-
-	var cameraVR = new ArrayCamera( [ cameraL, cameraR ] );
-	cameraVR.layers.enable( 1 );
-	cameraVR.layers.enable( 2 );
-
-	//
-
-	this.enabled = false;
-
-	this.getController = function ( id ) {
-
-		var controller = controllers[ id ];
-
-		if ( controller === undefined ) {
-
-			controller = new Group();
-			controller.matrixAutoUpdate = false;
-			controller.visible = false;
-
-			controllers[ id ] = controller;
-
-		}
-
-		return controller;
-
-	};
-
-	this.getDevice = function () {
-
-		return device;
-
-	};
-
-	this.setDevice = function ( value ) {
-
-		if ( value !== undefined ) device = value;
-		if ( value instanceof XRDevice ) gl.setCompatibleXRDevice( value );
-
-	};
-
-	//
-
-	function onSessionEvent( event ) {
-
-		var controller = controllers[ inputSources.indexOf( event.inputSource ) ];
-		if ( controller ) controller.dispatchEvent( { type: event.type } );
-
-	}
-
-	function onSessionEnd() {
-
-		renderer.setFramebuffer( null );
-		animation.stop();
-
-	}
-
-	this.setFrameOfReferenceType = function ( value ) {
-
-		frameOfReferenceType = value;
-
-	};
-
-	this.setSession = function ( value ) {
-
-		session = value;
-
-		if ( session !== null ) {
-
-			session.addEventListener( 'select', onSessionEvent );
-			session.addEventListener( 'selectstart', onSessionEvent );
-			session.addEventListener( 'selectend', onSessionEvent );
-			session.addEventListener( 'end', onSessionEnd );
-
-			session.baseLayer = new XRWebGLLayer( session, gl );
-			session.requestFrameOfReference( frameOfReferenceType ).then( function ( value ) {
-
-				frameOfReference = value;
-
-				renderer.setFramebuffer( session.baseLayer.framebuffer );
-
-				animation.setContext( session );
-				animation.start();
-
-			} );
-
-			//
-
-			inputSources = session.getInputSources();
-
-			session.addEventListener( 'inputsourceschange', function () {
-
-				inputSources = session.getInputSources();
-				console.log( inputSources );
-
-			} );
-
-		}
-
-	};
-
-	function updateCamera( camera, parent ) {
-
-		if ( parent === null ) {
-
-			camera.matrixWorld.copy( camera.matrix );
-
-		} else {
-
-			camera.matrixWorld.multiplyMatrices( parent.matrixWorld, camera.matrix );
-
-		}
-
-		camera.matrixWorldInverse.getInverse( camera.matrixWorld );
-
-	}
-
-	this.getCamera = function ( camera ) {
-
-		if ( isPresenting() ) {
-
-			var parent = camera.parent;
-			var cameras = cameraVR.cameras;
-
-			// apply camera.parent to cameraVR
-
-			updateCamera( cameraVR, parent );
-
-			for ( var i = 0; i < cameras.length; i ++ ) {
-
-				updateCamera( cameras[ i ], parent );
-
-			}
-
-			// update camera and its children
-
-			camera.matrixWorld.copy( cameraVR.matrixWorld );
-
-			var children = camera.children;
-
-			for ( var i = 0, l = children.length; i < l; i ++ ) {
-
-				children[ i ].updateMatrixWorld( true );
-
-			}
-
-			return cameraVR;
-
-		}
-
-		return camera;
-
-	};
-
-	this.isPresenting = isPresenting;
-
-	// Animation Loop
-
-	var onAnimationFrameCallback = null;
-
-	function onAnimationFrame( time, frame ) {
-
-		pose = frame.getDevicePose( frameOfReference );
-
-		if ( pose !== null ) {
-
-			var layer = session.baseLayer;
-			var views = frame.views;
-
-			for ( var i = 0; i < views.length; i ++ ) {
-
-				var view = views[ i ];
-				var viewport = layer.getViewport( view );
-				var viewMatrix = pose.getViewMatrix( view );
-
-				var camera = cameraVR.cameras[ i ];
-				camera.matrix.fromArray( viewMatrix ).getInverse( camera.matrix );
-				camera.projectionMatrix.fromArray( view.projectionMatrix );
-				camera.viewport.set( viewport.x, viewport.y, viewport.width, viewport.height );
-
-				if ( i === 0 ) {
-
-					cameraVR.matrix.copy( camera.matrix );
-
-					// HACK (mrdoob)
-					// https://github.com/w3c/webvr/issues/203
-
-					cameraVR.projectionMatrix.copy( camera.projectionMatrix );
-
-				}
-
-			}
-
-		}
-
-		//
-
-		for ( var i = 0; i < controllers.length; i ++ ) {
-
-			var controller = controllers[ i ];
-
-			var inputSource = inputSources[ i ];
-
-			if ( inputSource ) {
-
-				var inputPose = frame.getInputPose( inputSource, frameOfReference );
-
-				if ( inputPose !== null ) {
-
-					if ( 'targetRay' in inputPose ) {
-
-						controller.matrix.elements = inputPose.targetRay.transformMatrix;
-
-					} else if ( 'pointerMatrix' in inputPose ) {
-
-						// DEPRECATED
-
-						controller.matrix.elements = inputPose.pointerMatrix;
-
-					}
-
-					controller.matrix.decompose( controller.position, controller.rotation, controller.scale );
-					controller.visible = true;
-
-					continue;
-
-				}
-
-			}
-
-			controller.visible = false;
-
-		}
-
-		if ( onAnimationFrameCallback ) onAnimationFrameCallback( time );
-
-	}
-
-	var animation = new WebGLAnimation();
-	animation.setAnimationLoop( onAnimationFrame );
-
-	this.setAnimationLoop = function ( callback ) {
-
-		onAnimationFrameCallback = callback;
-
-	};
-
-	this.dispose = function () {};
-
-	// DEPRECATED
-
-	this.getStandingMatrix = function () {
-
-		console.warn( 'THREE.WebXRManager: getStandingMatrix() is no longer needed.' );
-		return new THREE.Matrix4();
-
-	};
-
-	this.submitFrame = function () {};
-
-}
+/*
+if (presenting)
+  if (views)
+    if (views.multiview)
+      ViewsAndMultiview()
+    else
+      Views()
+  else
+    ArrayCamera()
+else
+  if (ArrayCamera)
+    NoArrayCamera
+  else
+    ArrayCamera
+
+No array camera
+---------------
+for obj in renderlist:
+  render (obj, cam)
+
+Array camera
+------------
+for obj in renderlist:
+  for cam in arrayCamera:
+    render (obj, cam)
+
+Views
+-----
+for view in display.getViews():
+  for obj in renderlist:
+    render (obj, [framedata.leftMatrix, frameData.rightMatrix][view], view.fbo)
+
+Views & Multiview
+-----------------
+view = display.getViews()[0]
+setViewPortAndScissors(view)
+for obj in renderlist:
+  render (obj, [framedata.leftMatrix, framedata.rightMatrix], view.fbo)
+ */
 
 /**
  * @author supereggbert / http://www.paulbrunt.co.uk/
@@ -21948,6 +21778,8 @@ function WebXRManager( renderer ) {
  * @author szimek / https://github.com/szimek/
  * @author tschw
  */
+
+var renderTargetMultiview = null;
 
 function WebGLRenderer( parameters ) {
 
@@ -22113,6 +21945,17 @@ function WebGLRenderer( parameters ) {
 			}
 
 		}
+		// _gl = WebGLDebugUtils.makeDebugContext(_gl, undefined, logGLCall);
+
+		var ext = _gl.getExtension('WEBGL_multiview'); //!AB MV
+		if (ext) {
+			console.log("MULTIVIEW extension is supported");
+			this.multiviewSupported = true;
+		}
+		else {
+			console.log("MULTIVIEW extension is NOT supported");
+			this.multiviewSupported = false;
+		}
 
 		// Some experimental-webgl implementations do not have getShaderPrecisionFormat
 
@@ -22139,12 +21982,15 @@ function WebGLRenderer( parameters ) {
 	var background, morphtargets, bufferRenderer, indexedBufferRenderer;
 
 	var utils;
+	var isMultiviewSupported = this.multiviewSupported; //!AB 
 
 	function initGLContext() {
 
 		extensions = new WebGLExtensions( _gl );
 
 		capabilities = new WebGLCapabilities( _gl, extensions, parameters );
+
+		capabilities.isESSL3 = isMultiviewSupported; //!AB
 
 		if ( ! capabilities.isWebGL2 ) {
 
@@ -22202,7 +22048,8 @@ function WebGLRenderer( parameters ) {
 
 	if ( typeof navigator !== 'undefined' ) {
 
-		vr = ( 'xr' in navigator ) ? new WebXRManager( _this ) : new WebVRManager( _this );
+		//!AB: disabling WebXR: vr = ( 'xr' in navigator ) ? new WebXRManager( _this ) : new WebVRManager( _this );
+		vr = new WebVRManager( _this );
 
 	}
 
@@ -22995,10 +22842,75 @@ function WebGLRenderer( parameters ) {
 
 		if ( this.info.autoReset ) this.info.reset();
 
+
+		function WebGLRenderTargetMultiview( width, height, options ) {
+
+			this.uuid = _Math.generateUUID();
+
+			this.width = width;
+			this.height = height;
+			this.texture = null;
+
+			this.scissor = new Vector4( 0, 0, width, height );
+			this.scissorTest = false;
+
+			this.viewport = new Vector4( 0, 0, width, height );
+
+			options = options || {};
+
+			if ( options.webglFramebuffer ) {
+				properties.get( this ).__webglFramebuffer = options.webglFramebuffer;
+
+			} else {
+
+				if ( options.minFilter === undefined ) options.minFilter = LinearFilter;
+
+				this.texture = new Texture( undefined, undefined, options.wrapS, options.wrapT, options.magFilter, options.minFilter, options.format, options.type, options.anisotropy, options.encoding );
+
+			}
+
+			this.depthBuffer = options.depthBuffer !== undefined ? options.depthBuffer : true;
+			this.stencilBuffer = options.stencilBuffer !== undefined ? options.stencilBuffer : true;
+			this.depthTexture = options.depthTexture !== undefined ? options.depthTexture : null;
+
+		}
+
+
 		if ( renderTarget === undefined ) {
 
 			renderTarget = null;
 
+			var vrDevice = vr.getDevice();
+			if ( vrDevice && vrDevice.isPresenting ) {
+
+				var views = vr.getViews();
+				if ( views.length > 0 ) {
+
+					var view = views[ 0 ];
+					var multiview = view.getAttributes().multiview;
+					var viewport = view.getViewport();
+
+					//!AB @TODO: consider to use WHOLE viewport here, not only W/H!!!
+					if (multiview) {
+						if ((!renderTargetMultiview || renderTargetMultiview.width != viewport.width || renderTargetMultiview.height != viewport.height)) {
+
+  						renderTargetMultiview = new WebGLRenderTargetMultiview(viewport.width, viewport.height, {
+
+								webglFramebuffer: view.framebuffer
+
+							});
+
+							renderTargetMultiview.scissorTest = true;
+						}
+      		} else {
+						renderTargetMultiview = null;
+					}
+				}
+
+				renderTarget = renderTargetMultiview;
+			} else {
+				renderTargetMultiview = null;
+			}
 		}
 
 		this.setRenderTarget( renderTarget );
@@ -23032,7 +22944,6 @@ function WebGLRenderer( parameters ) {
 		}
 
 		// Generate mipmap if we're using any kind of mipmap filtering
-
 		if ( renderTarget ) {
 
 			textures.updateRenderTargetMipmap( renderTarget );
@@ -23047,6 +22958,8 @@ function WebGLRenderer( parameters ) {
 
 		state.setPolygonOffset( false );
 
+		state.setScissorTest( false );
+		
 		scene.onAfterRender( _this, scene, camera );
 
 		if ( vr.enabled ) {
@@ -23222,8 +23135,13 @@ function WebGLRenderer( parameters ) {
 		}
 
 	}
-
-	function renderObjects( renderList, scene, camera, overrideMaterial ) {
+/* !AB: this function was modified and renamed to renderObjectsArrayCamera. We also added the following new functions:
+    1) renderObjectsArrayCamera
+    2) renderVRObjects
+    3) renderNonVRObjects
+    4) renderObjectsMultiview
+*/
+	function renderObjectsArrayCamera( renderList, scene, camera, overrideMaterial ) {
 
 		for ( var i = 0, l = renderList.length; i < l; i ++ ) {
 
@@ -23313,6 +23231,90 @@ function WebGLRenderer( parameters ) {
 		currentRenderState = renderStates.get( scene, _currentArrayCamera || camera );
 
 	}
+
+	//!AB begin
+	function renderNonVRObjects( renderList, scene, camera, overrideMaterial ) {
+
+		if ( camera.isArrayCamera ) {
+			// console.log('>>>>>>>>>>>>>>>>>> Array Camera');
+			renderObjectsArrayCamera( renderList, scene, camera, overrideMaterial );
+
+		} else {
+			// console.log('>>>>>>>>>>>>>>>>>> Non-array camera');
+
+			for ( var i = 0, l = renderList.length; i < l; i ++ ) {
+
+				var renderItem = renderList[ i ];
+
+				var object = renderItem.object;
+				var geometry = renderItem.geometry;
+				var material = overrideMaterial === undefined ? renderItem.material : overrideMaterial;
+				var group = renderItem.group;
+
+				_currentArrayCamera = null;
+
+				renderObject( object, scene, camera, geometry, material, group );
+
+			}
+
+		}
+
+	}
+
+	function renderVRObjects( renderList, scene, camera, overrideMaterial ) {
+
+		var views = vr.getViews();
+
+		if ( views.length > 0 ) {
+
+			// Has multiview support
+			if ( views[ 0 ].getAttributes().multiview ) {
+				// console.log('>>>>>>>>>>>>>>>>>> Views & Multiview');
+
+				// Views & Multiview
+				renderObjectsMultiview( renderList, scene, camera, overrideMaterial );
+
+			}
+		} else {
+			// console.log('>>>>>>>>>>>>>>>>>> Array camera (no views)');
+
+			renderObjectsArrayCamera( renderList, scene, camera, overrideMaterial );
+
+		}
+	}
+
+	function renderObjects( renderList, scene, camera, overrideMaterial ) {
+
+		var vrDevice = vr.getDevice();
+		if ( vrDevice && vrDevice.isPresenting ) {
+			// console.log('>>>>>>>>> Presenting');
+			renderVRObjects( renderList, scene, camera, overrideMaterial );
+
+		} else {
+
+			// console.log('>>>>>>>>> 2d');
+			renderNonVRObjects( renderList, scene, camera, overrideMaterial );
+
+		}
+
+	}
+
+	function renderObjectsMultiview( renderList, scene, camera, overrideMaterial ) {
+
+		for ( var i = 0, l = renderList.length; i < l; i ++ ) {
+			var renderItem = renderList[ i ];
+
+			var object = renderItem.object;
+			var geometry = renderItem.geometry;
+			var material = overrideMaterial === undefined ? renderItem.material : overrideMaterial;
+			var group = renderItem.group;
+
+			renderObject( object, scene, camera, geometry, material, group );
+
+		}
+
+	}
+	//!AB end
 
 	function initMaterial( material, fog, object ) {
 
@@ -23502,6 +23504,8 @@ function WebGLRenderer( parameters ) {
 
 	function setProgram( camera, fog, material, object ) {
 
+		var multiviewSupport = vr.hasMultiviewSupport();
+
 		_usedTextureUnits = 0;
 
 		var materialProperties = properties.get( material );
@@ -23590,9 +23594,21 @@ function WebGLRenderer( parameters ) {
 
 		}
 
+		var device = vr.getDevice();
+		p_uniforms.setValue( _gl, 'isMultiview', device && device.isPresenting && multiviewSupport );
+
 		if ( refreshProgram || _currentCamera !== camera ) {
 
-			p_uniforms.setValue( _gl, 'projectionMatrix', camera.projectionMatrix );
+			if (multiviewSupport && camera.cameras) { //!AB: camera.cameras might be still not set!
+				p_uniforms.setValue( _gl, 'leftProjectionMatrix', camera.cameras[ 0 ].projectionMatrix );
+				p_uniforms.setValue( _gl, 'rightProjectionMatrix', camera.cameras[ 1 ].projectionMatrix );
+				p_uniforms.setValue( _gl, 'projectionMatrix', camera.projectionMatrix );
+
+			} else {
+
+				p_uniforms.setValue( _gl, 'projectionMatrix', camera.projectionMatrix );
+
+			}
 
 			if ( capabilities.logarithmicDepthBuffer ) {
 
@@ -23600,6 +23616,9 @@ function WebGLRenderer( parameters ) {
 					2.0 / ( Math.log( camera.far + 1.0 ) / Math.LN2 ) );
 
 			}
+
+
+			// Avoid unneeded uniform updates per ArrayCamera's sub-camera
 
 			if ( _currentCamera !== camera ) {
 
@@ -23640,7 +23659,17 @@ function WebGLRenderer( parameters ) {
 				material.isShaderMaterial ||
 				material.skinning ) {
 
-				p_uniforms.setValue( _gl, 'viewMatrix', camera.matrixWorldInverse );
+				if (multiviewSupport && camera.cameras) { //!AB: camera.cameras might be still not set!
+
+					p_uniforms.setValue( _gl, 'leftViewMatrix', camera.cameras[ 0 ].matrixWorldInverse );
+					p_uniforms.setValue( _gl, 'rightViewMatrix', camera.cameras[ 1 ].matrixWorldInverse );
+					p_uniforms.setValue( _gl, 'viewMatrix', camera.matrixWorldInverse );
+
+				} else {
+
+					p_uniforms.setValue( _gl, 'viewMatrix', camera.matrixWorldInverse );
+
+				}
 
 			}
 
@@ -24422,6 +24451,8 @@ function WebGLRenderer( parameters ) {
 	};
 
 	this.setRenderTarget = function ( renderTarget ) {
+
+		// !!!!!!!!!!!!!!!!!
 
 		_currentRenderTarget = renderTarget;
 
