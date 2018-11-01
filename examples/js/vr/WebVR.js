@@ -7,9 +7,9 @@
 
 var WEBVR = {
 	attributes: {
-    antialias: true,
+		antialias: true,
 		depth: true,
-		multiview: true		
+		multiview: false //!AB see below for init
 	},
 
 	createButton: function ( renderer, options ) {
@@ -19,6 +19,7 @@ var WEBVR = {
 			renderer.vr.setFrameOfReferenceType( options.frameOfReferenceType );
 
 		}
+		this.attributes.multiview = renderer.multiviewSupported; //!AB
 
 		function showEnterVR( device ) {
 
