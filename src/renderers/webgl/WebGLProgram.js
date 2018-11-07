@@ -572,6 +572,7 @@ function WebGLProgram( renderer, extensions, code, material, shader, parameters,
 	var fragmentGlsl = prefixFragment + fragmentShader;
 
 	//!AB: forcing ES3 shaders for multiview 
+/*
 	if ( renderer.multiviewSupported ) {
 
 		//@todo Detect version and skip it
@@ -603,7 +604,7 @@ function WebGLProgram( renderer, extensions, code, material, shader, parameters,
 		vertexGlsl = '#version 300 es\n' + gles3VS + vertexGlsl;
 		fragmentGlsl = '#version 300 es\n' + gles3PS + fragmentGlsl;
 
-	} else {
+	} else*/ {
     vertexGlsl = prefixVertex + '#define VIEW_ID 0\n' + '#define LEFT_EYE_VIEW_ID 0\n' + vertexShader;
   }
 
