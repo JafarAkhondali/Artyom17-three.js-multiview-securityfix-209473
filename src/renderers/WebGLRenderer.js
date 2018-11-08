@@ -311,7 +311,7 @@ function WebGLRenderer( parameters ) {
 
 		capabilities = new WebGLCapabilities( _gl, extensions, parameters );
 
-		capabilities.isESSL3 = isMultiviewSupported; //!AB
+		capabilities.isESSL3 = (capabilities.isWebGL2 || (isMultiviewSupported && capabilities.transpileWebGL1toESSL3)); //!AB
 
 		if ( ! capabilities.isWebGL2 ) {
 

@@ -88,6 +88,7 @@ function WebGLCapabilities( gl, extensions, parameters ) {
 
 		isWebGL2: isWebGL2,
 		isESSL3: isWebGL2, //!AB: might be set later, see WebGLRenderer
+		transpileWebGL1toESSL3: false, //!AB: set to true if browser can't transpile WebGL1 shaders to ESSL3 (for MV)
 
 		getMaxAnisotropy: getMaxAnisotropy,
 		getMaxPrecision: getMaxPrecision,
