@@ -139,7 +139,6 @@ var WEBVR = {
 
 		}
 
-    /* !AB: disabling WebXR for now
 		if ( 'xr' in navigator ) {
 
 			var button = document.createElement( 'button' );
@@ -149,7 +148,7 @@ var WEBVR = {
 
 			navigator.xr.requestDevice().then( function ( device ) {
 
-				device.supportsSession( { immersive: true, exclusive: true /* DEPRECATED * } )
+				device.supportsSession( { immersive: true, exclusive: true /* DEPRECATED */ } )
 					.then( function () { showEnterXR( device ); } )
 					.catch( showVRNotFound );
 
@@ -157,7 +156,7 @@ var WEBVR = {
 
 			return button;
 
-		} else */ if ( 'getVRDisplays' in navigator ) {
+		} else if ( 'getVRDisplays' in navigator ) {
 
 			var button = document.createElement( 'button' );
 			button.style.display = 'none';
