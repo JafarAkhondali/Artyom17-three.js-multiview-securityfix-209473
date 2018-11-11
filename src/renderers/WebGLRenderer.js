@@ -272,10 +272,15 @@ function WebGLRenderer( parameters ) {
 		if (ext) {
 			console.log("MULTIVIEW extension is supported");
 			this.multiviewSupported = true;
-		}
-		else {
-			console.log("MULTIVIEW extension is NOT supported");
-			this.multiviewSupported = false;
+		} else {
+			ext = _gl.getExtension('OVR_multiview');
+			if (ext) {
+				console.log("OVR MULTIVIEW extension is supported");
+				this.multiviewSupported = true;
+			} else {
+				console.log("MULTIVIEW extension is NOT supported");
+				this.multiviewSupported = false;
+			}
 		}
 
 		// Some experimental-webgl implementations do not have getShaderPrecisionFormat
@@ -1598,13 +1603,12 @@ function WebGLRenderer( parameters ) {
 			} else {
 				// Views
 				// console.log('>>>>>>>>>>>>>>>>>> Views & !Multiview');
-
+				renderObjectsArrayCamera( renderList, scene, camera, overrideMaterial );
 			}
 		} else {
 			// console.log('>>>>>>>>>>>>>>>>>> Array camera (no views)');
 
 			renderObjectsArrayCamera( renderList, scene, camera, overrideMaterial );
-
 		}
 	}
 
@@ -1614,14 +1618,11 @@ function WebGLRenderer( parameters ) {
 		if ( vrDevice && vrDevice.isPresenting ) {
 			// console.log('>>>>>>>>> Presenting');
 			renderVRObjects( renderList, scene, camera, overrideMaterial );
-
 		} else {
 
 			// console.log('>>>>>>>>> 2d');
 			renderNonVRObjects( renderList, scene, camera, overrideMaterial );
-
 		}
-
 	}
 
 	function renderObjectsMultiview( renderList, scene, camera, overrideMaterial ) {
