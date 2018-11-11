@@ -72,6 +72,7 @@ function WebXRManager( renderer ) {
 	};
 
 	this.setDevice = function ( value ) {
+		console.log( 'Using THREE.WebXRManager.' );
 
 		if ( value !== undefined ) device = value;
 		if ( value instanceof XRDevice ) gl.setCompatibleXRDevice( value );
@@ -296,6 +297,11 @@ function WebXRManager( renderer ) {
 	};
 
 	this.submitFrame = function () {};
+
+	this.hasMultiviewSupport = function () {
+
+		return false;
+	};
 
 }
 
