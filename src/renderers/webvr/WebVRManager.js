@@ -12,6 +12,7 @@ import { PerspectiveCamera } from '../../cameras/PerspectiveCamera.js';
 import { WebGLAnimation } from '../webgl/WebGLAnimation.js';
 
 function WebVRManager( renderer ) {
+	var num_views = 2; //!AB MV
 
 	var scope = this;
 
@@ -61,6 +62,7 @@ function WebVRManager( renderer ) {
 
 	function onVRDisplayPresentChange() {
 
+		num_views = 2;
 		if ( isPresenting() ) {
 
 			var eyeParameters = device.getEyeParameters( 'left' );
@@ -70,13 +72,13 @@ function WebVRManager( renderer ) {
 			currentPixelRatio = renderer.getPixelRatio();
 			currentSize = renderer.getSize();
 
-            var num_views = 2;
-            var views = device.getViews ? device.getViews() : [];
-            if (views.length > 0) {
-              var view = views[0];
-              num_views = (view.getAttributes().multiview) ? 1 : 2;
-              console.log("onVRPresentChange, presenting, multiview = " + ((num_views == 1) ? true : false));
-            }
+			var views = device.getViews ? device.getViews() : [];
+			if (views.length > 0) {
+				var view = views[0];
+				num_views = (view.getAttributes().multiview) ? 1 : 2;
+				console.log("onVRPresentChange, presenting, multiview = " + 
+						view.getAttributes().multiview);
+			}
 			renderer.setDrawingBufferSize( renderWidth * num_views, renderHeight, 1 );
 
 			animation.start();
@@ -241,15 +243,7 @@ function WebVRManager( renderer ) {
 
 	this.hasMultiviewSupport = function () {
 
-		var views = this.getViews();
-
-		if ( views.length > 0 ) {
-
-			return views[ 0 ].getAttributes().multiview;
-
-		}
-
-		return false;
+		return (num_views == 1);
 	};
 
 	this.getCamera = function ( camera ) {
