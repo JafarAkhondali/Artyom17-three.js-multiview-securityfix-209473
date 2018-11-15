@@ -574,44 +574,43 @@ function WebGLProgram( renderer, extensions, code, material, shader, parameters,
 	//!AB: forcing ES3 shaders for multiview 
 
 	if ( renderer.multiviewSupported ) {
-		var vsHdr = `#extension GL_OVR_multiview : require
-								#define VIEW_ID gl_ViewID_OVR\n`;
+		var vsHdr = '#extension GL_OVR_multiview : require\n'+
+								'#define VIEW_ID gl_ViewID_OVR\n';
 		var psHdr = "";
 
 	  if (capabilities.isWebGL2 || capabilities.transpileWebGL1toESSL3) {
 			vsHdr = vsHdr + 
-	     `#define LEFT_EYE_VIEW_ID 0u
-				layout(num_views=2) in;
-				#define GL2\n`;
+				'#define LEFT_EYE_VIEW_ID 0u\n'+
+				'layout(num_views=2) in;\n'+
+				'#define GL2\n';
 
 			psHdr = "#define GL2\n"; 
 
 			if (capabilities.transpileWebGL1toESSL3) {
-				vsHdr = vsHdr+ `#define attribute in
-									#define varying out
-									#define texture2D texture\n`;
+				vsHdr = vsHdr+ '#define attribute in\n'+
+									'#define varying out\n'+
+									'#define texture2D texture\n';
 
-				psHdr = psHdr+ `#define varying in
-									out highp vec4 pc_fragColor;
-									#define gl_FragColor pc_fragColor
-									#define texture2D texture
-									#define textureCube texture
-									#define texture2DProj textureProj
-									#define texture2DLodEXT textureLod
-									#define texture2DProjLodEXT textureProjLod
-									#define textureCubeLodEXT textureLod
-									#define texture2DGradEXT textureGrad
-									#define texture2DProjGradEXT textureProjGrad
-									#define textureCubeGradEXT textureGrad
-
-									#define sample sample_var\n`;
+				psHdr = psHdr+ '#define varying in\n'+
+									'out highp vec4 pc_fragColor;\n'+
+									'#define gl_FragColor pc_fragColor\n'+
+									'#define texture2D texture\n'+
+									'#define textureCube texture\n'+
+									'#define texture2DProj textureProj\n'+
+									'#define texture2DLodEXT textureLod\n'+
+									'#define texture2DProjLodEXT textureProjLod\n'+
+									'#define textureCubeLodEXT textureLod\n'+
+									'#define texture2DGradEXT textureGrad\n'+
+									'#define texture2DProjGradEXT textureProjGrad\n'+
+									'#define textureCubeGradEXT textureGrad\n'+
+									'#define sample sample_var\n';
 				console.log("Transpiling shader to ESSL3!");
 			}
 
 			vertexGlsl = '#version 300 es\n' + vsHdr + vertexGlsl;
 			fragmentGlsl = '#version 300 es\n' + psHdr + fragmentGlsl;
 	  } else {
-			vsHdr = vsHdr + `#define LEFT_EYE_VIEW_ID 0\n`
+			vsHdr = vsHdr + '#define LEFT_EYE_VIEW_ID 0\n';
 
 			vertexGlsl = vsHdr + vertexGlsl;
 			fragmentGlsl = psHdr + fragmentGlsl;

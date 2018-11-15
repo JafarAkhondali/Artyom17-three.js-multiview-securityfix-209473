@@ -1206,8 +1206,7 @@ function WebGLRenderer( parameters ) {
 
 			renderTarget = null;
 
-			var vrDevice = vr.getDevice();
-			if ( vrDevice && vrDevice.isPresenting ) {
+			if ( vr.isPresenting() ) {
 
 				var views = vr.getViews();
 				if ( views.length > 0 ) {
@@ -1228,7 +1227,7 @@ function WebGLRenderer( parameters ) {
 
 							renderTargetMultiview.scissorTest = true;
 						}
-      		} else {
+					} else {
 						renderTargetMultiview = null;
 					}
 				}
@@ -1614,8 +1613,7 @@ function WebGLRenderer( parameters ) {
 
 	function renderObjects( renderList, scene, camera, overrideMaterial ) {
 
-		var vrDevice = vr.getDevice();
-		if ( vrDevice && vrDevice.isPresenting ) {
+		if ( vr.isPresenting() ) {
 			// console.log('>>>>>>>>> Presenting');
 			renderVRObjects( renderList, scene, camera, overrideMaterial );
 		} else {
@@ -1920,8 +1918,7 @@ function WebGLRenderer( parameters ) {
 
 		}
 
-		var device = vr.getDevice();
-		p_uniforms.setValue( _gl, 'isMultiview', device && device.isPresenting && multiviewSupport );
+		p_uniforms.setValue( _gl, 'isMultiview', vr.isPresenting() && multiviewSupport );
 
 		if ( refreshProgram || _currentCamera !== camera ) {
 

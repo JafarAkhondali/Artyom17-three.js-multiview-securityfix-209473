@@ -8,7 +8,28 @@ import { ArrayCamera } from '../../cameras/ArrayCamera.js';
 import { PerspectiveCamera } from '../../cameras/PerspectiveCamera.js';
 import { WebGLAnimation } from '../webgl/WebGLAnimation.js';
 
+function MultiviewView (viewport, framebuffer) {
+	this.framebuffer = framebuffer;
+
+	this._attributes = {
+		multiview: true //!AB see below for init
+	},
+	this._viewport = viewport;
+
+	this.getAttributes = function () {
+
+		return this._attributes;
+	}
+
+	this.getViewport = function () {
+
+		return this._viewport;
+	}
+}
+          
 function WebXRManager( renderer ) {
+
+	var scope = this;
 
 	var gl = renderer.context;
 
@@ -44,6 +65,8 @@ function WebXRManager( renderer ) {
 	cameraVR.layers.enable( 2 );
 
 	//
+
+	this.multiview_view = null; //!AB MV
 
 	this.enabled = false;
 
@@ -101,7 +124,7 @@ function WebXRManager( renderer ) {
 
 	};
 
-	this.setSession = function ( value ) {
+	this.setSession = function ( value, attributes ) {
 
 		session = value;
 
@@ -112,7 +135,9 @@ function WebXRManager( renderer ) {
 			session.addEventListener( 'selectend', onSessionEvent );
 			session.addEventListener( 'end', onSessionEnd );
 
-			session.baseLayer = new XRWebGLLayer( session, gl );
+			console.log("setSession, presenting, multiview = " + 
+					attributes.multiview);
+			session.baseLayer = new XRWebGLLayer( session, gl, attributes );
 			session.requestFrameOfReference( frameOfReferenceType ).then( function ( value ) {
 
 				frameOfReference = value;
@@ -227,6 +252,11 @@ function WebXRManager( renderer ) {
 
 					cameraVR.projectionMatrix.copy( camera.projectionMatrix );
 
+					if (layer.multiview) {
+
+						scope.multiview_view = new MultiviewView(viewport, layer.framebuffer);
+					}
+
 				}
 
 			}
@@ -287,7 +317,28 @@ function WebXRManager( renderer ) {
 
 	this.dispose = function () {};
 
-	// DEPRECATED
+	//!AB MV
+	this.hasMultiviewSupport = function () {
+		if ( session !== null ) {
+
+			return session.baseLayer.multiview;
+		}
+		return false;
+	};
+
+	this.getViews = function () {
+
+		if ( this.hasMultiviewSupport() ) {
+
+			return [ this.multiview_view ];
+		}
+
+		return [];
+
+	};
+	//!AB MV end
+	
+  // DEPRECATED
 
 	this.getStandingMatrix = function () {
 
@@ -297,11 +348,6 @@ function WebXRManager( renderer ) {
 	};
 
 	this.submitFrame = function () {};
-
-	this.hasMultiviewSupport = function () {
-
-		return false;
-	};
 
 }
 
