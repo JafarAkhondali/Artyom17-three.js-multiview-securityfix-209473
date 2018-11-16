@@ -186,6 +186,11 @@
 			}
 
 			function render() {
+				if (renderer.vr.hasMultiviewSupport()) {
+					scene.background = new THREE.Color( 0x050b0 );
+				} else {
+					scene.background = new THREE.Color( 0x505050 );
+				}	
 
 				var delta = clock.getDelta() * 60;
 
