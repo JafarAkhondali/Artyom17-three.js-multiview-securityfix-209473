@@ -48,7 +48,7 @@ import {
 	TriangleFanDrawMode,
 	TriangleStripDrawMode,
 	TrianglesDrawMode,
-  LinearFilter,
+	LinearFilter,
 	LinearToneMapping,
 	BackSide
 } from '../constants.js';
@@ -262,25 +262,35 @@ function WebGLRenderer( parameters ) {
 
 		}
 
-		function logGLCall(functionName, args) {
-		   console.log("gl." + functionName + "(" +
-		      WebGLDebugUtils.glFunctionArgsToString(functionName, args) + ")");
+		function logGLCall( functionName, args ) {
+
+		   console.log( "gl." + functionName + "(" +
+		      WebGLDebugUtils.glFunctionArgsToString( functionName, args ) + ")" );
+
 		}
 		// _gl = WebGLDebugUtils.makeDebugContext(_gl, undefined, logGLCall);
 
-		var ext = _gl.getExtension('WEBGL_multiview'); //!AB MV
-		if (ext) {
-			console.log("MULTIVIEW extension is supported");
+		var ext = _gl.getExtension( 'WEBGL_multiview' ); //!AB MV
+		if ( ext ) {
+
+			console.log( "MULTIVIEW extension is supported" );
 			this.multiviewSupported = true;
+
 		} else {
-			ext = _gl.getExtension('OVR_multiview');
-			if (ext) {
-				console.log("OVR MULTIVIEW extension is supported");
+
+			ext = _gl.getExtension( 'OVR_multiview' );
+			if ( ext ) {
+
+				console.log( "OVR MULTIVIEW extension is supported" );
 				this.multiviewSupported = true;
+
 			} else {
-				console.log("MULTIVIEW extension is NOT supported");
+
+				console.log( "MULTIVIEW extension is NOT supported" );
 				this.multiviewSupported = false;
+
 			}
+
 		}
 
 		// Some experimental-webgl implementations do not have getShaderPrecisionFormat
@@ -308,7 +318,7 @@ function WebGLRenderer( parameters ) {
 	var background, morphtargets, bufferRenderer, indexedBufferRenderer;
 
 	var utils;
-	var isMultiviewSupported = this.multiviewSupported; //!AB 
+	var isMultiviewSupported = this.multiviewSupported; //!AB
 
 	function initGLContext() {
 
@@ -316,7 +326,7 @@ function WebGLRenderer( parameters ) {
 
 		capabilities = new WebGLCapabilities( _gl, extensions, parameters );
 
-		capabilities.isESSL3 = (capabilities.isWebGL2 || (isMultiviewSupported && capabilities.transpileWebGL1toESSL3)); //!AB
+		capabilities.isESSL3 = ( capabilities.isWebGL2 || ( isMultiviewSupported && capabilities.transpileWebGL1toESSL3 ) ); //!AB
 
 		if ( ! capabilities.isWebGL2 ) {
 
@@ -1185,6 +1195,7 @@ function WebGLRenderer( parameters ) {
 			options = options || {};
 
 			if ( options.webglFramebuffer ) {
+
 				properties.get( this ).__webglFramebuffer = options.webglFramebuffer;
 
 			} else {
@@ -1216,26 +1227,36 @@ function WebGLRenderer( parameters ) {
 					var viewport = view.getViewport();
 
 					//!AB @TODO: consider to use WHOLE viewport here, not only W/H!!!
-					if (multiview) {
-						if ((!renderTargetMultiview || renderTargetMultiview.width != viewport.width || renderTargetMultiview.height != viewport.height)) {
+					if ( multiview ) {
 
-  						renderTargetMultiview = new WebGLRenderTargetMultiview(viewport.width, viewport.height, {
+						if ( ( ! renderTargetMultiview || renderTargetMultiview.width != viewport.width || renderTargetMultiview.height != viewport.height ) ) {
+
+  						renderTargetMultiview = new WebGLRenderTargetMultiview( viewport.width, viewport.height, {
 
 								webglFramebuffer: view.framebuffer
 
-							});
+							} );
 
 							renderTargetMultiview.scissorTest = true;
+
 						}
+
 					} else {
+
 						renderTargetMultiview = null;
+
 					}
+
 				}
 
 				renderTarget = renderTargetMultiview;
+
 			} else {
+
 				renderTargetMultiview = null;
+
 			}
+
 		}
 
 		this.setRenderTarget( renderTarget );
@@ -1284,7 +1305,7 @@ function WebGLRenderer( parameters ) {
 		state.setPolygonOffset( false );
 
 		state.setScissorTest( false );
-		
+
 		scene.onAfterRender( _this, scene, camera );
 
 		if ( vr.enabled ) {
@@ -1460,7 +1481,7 @@ function WebGLRenderer( parameters ) {
 		}
 
 	}
-/* !AB: this function was modified and renamed to renderObjectsArrayCamera. We also added the following new functions:
+	/* !AB: this function was modified and renamed to renderObjectsArrayCamera. We also added the following new functions:
     1) renderObjectsArrayCamera
     2) renderVRObjects
     3) renderNonVRObjects
@@ -1561,10 +1582,12 @@ function WebGLRenderer( parameters ) {
 	function renderNonVRObjects( renderList, scene, camera, overrideMaterial ) {
 
 		if ( camera.isArrayCamera ) {
+
 			// console.log('>>>>>>>>>>>>>>>>>> Array Camera');
 			renderObjectsArrayCamera( renderList, scene, camera, overrideMaterial );
 
 		} else {
+
 			// console.log('>>>>>>>>>>>>>>>>>> Non-array camera');
 
 			for ( var i = 0, l = renderList.length; i < l; i ++ ) {
@@ -1594,38 +1617,50 @@ function WebGLRenderer( parameters ) {
 
 			// Has multiview support
 			if ( views[ 0 ].getAttributes().multiview ) {
+
 				// console.log('>>>>>>>>>>>>>>>>>> Views & Multiview');
 
 				// Views & Multiview
 				renderObjectsMultiview( renderList, scene, camera, overrideMaterial );
 
 			} else {
+
 				// Views
 				// console.log('>>>>>>>>>>>>>>>>>> Views & !Multiview');
 				renderObjectsArrayCamera( renderList, scene, camera, overrideMaterial );
+
 			}
+
 		} else {
+
 			// console.log('>>>>>>>>>>>>>>>>>> Array camera (no views)');
 
 			renderObjectsArrayCamera( renderList, scene, camera, overrideMaterial );
+
 		}
+
 	}
 
 	function renderObjects( renderList, scene, camera, overrideMaterial ) {
 
 		if ( vr.isPresenting() ) {
+
 			// console.log('>>>>>>>>> Presenting');
 			renderVRObjects( renderList, scene, camera, overrideMaterial );
+
 		} else {
 
 			// console.log('>>>>>>>>> 2d');
 			renderNonVRObjects( renderList, scene, camera, overrideMaterial );
+
 		}
+
 	}
 
 	function renderObjectsMultiview( renderList, scene, camera, overrideMaterial ) {
 
 		for ( var i = 0, l = renderList.length; i < l; i ++ ) {
+
 			var renderItem = renderList[ i ];
 
 			var object = renderItem.object;
@@ -1922,7 +1957,8 @@ function WebGLRenderer( parameters ) {
 
 		if ( refreshProgram || _currentCamera !== camera ) {
 
-			if (multiviewSupport && camera.cameras) { //!AB: camera.cameras might be still not set!
+			if ( multiviewSupport && camera.cameras ) { //!AB: camera.cameras might be still not set!
+
 				p_uniforms.setValue( _gl, 'leftProjectionMatrix', camera.cameras[ 0 ].projectionMatrix );
 				p_uniforms.setValue( _gl, 'rightProjectionMatrix', camera.cameras[ 1 ].projectionMatrix );
 				p_uniforms.setValue( _gl, 'projectionMatrix', camera.projectionMatrix );
@@ -1982,7 +2018,7 @@ function WebGLRenderer( parameters ) {
 				material.isShaderMaterial ||
 				material.skinning ) {
 
-				if (multiviewSupport && camera.cameras) { //!AB: camera.cameras might be still not set!
+				if ( multiviewSupport && camera.cameras ) { //!AB: camera.cameras might be still not set!
 
 					p_uniforms.setValue( _gl, 'leftViewMatrix', camera.cameras[ 0 ].matrixWorldInverse );
 					p_uniforms.setValue( _gl, 'rightViewMatrix', camera.cameras[ 1 ].matrixWorldInverse );

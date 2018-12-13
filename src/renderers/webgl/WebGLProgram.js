@@ -285,7 +285,7 @@ function WebGLProgram( renderer, extensions, code, material, shader, parameters,
 
 	//
 
-	var customExtensions = (capabilities.isWebGL2 || capabilities.isESSL3 ) ? '' : generateExtensions( material.extensions, parameters, extensions );
+	var customExtensions = ( capabilities.isWebGL2 || capabilities.isESSL3 ) ? '' : generateExtensions( material.extensions, parameters, extensions );
 
 	var customDefines = generateDefines( defines );
 
@@ -571,56 +571,66 @@ function WebGLProgram( renderer, extensions, code, material, shader, parameters,
 	var vertexGlsl = prefixVertex + vertexShader;
 	var fragmentGlsl = prefixFragment + fragmentShader;
 
-	//!AB: forcing ES3 shaders for multiview 
+	//!AB: forcing ES3 shaders for multiview
 
 	if ( renderer.multiviewSupported ) {
-		var vsHdr = '#extension GL_OVR_multiview : require\n'+
+
+		var vsHdr = '#extension GL_OVR_multiview : require\n' +
 								'#define VIEW_ID gl_ViewID_OVR\n';
 		var psHdr = "";
 
-	  if (capabilities.isWebGL2 || capabilities.transpileWebGL1toESSL3) {
-			vsHdr = vsHdr + 
-				'#define LEFT_EYE_VIEW_ID 0u\n'+
-				'layout(num_views=2) in;\n'+
+	  if ( capabilities.isWebGL2 || capabilities.transpileWebGL1toESSL3 ) {
+
+			vsHdr = vsHdr +
+				'#define LEFT_EYE_VIEW_ID 0u\n' +
+				'layout(num_views=2) in;\n' +
 				'#define GL2\n';
 
-			psHdr = "#define GL2\n"; 
+			psHdr = "#define GL2\n";
 
-			if (capabilities.transpileWebGL1toESSL3) {
-				vsHdr = vsHdr+ '#define attribute in\n'+
-									'#define varying out\n'+
+			if ( capabilities.transpileWebGL1toESSL3 ) {
+
+				vsHdr = vsHdr + '#define attribute in\n' +
+									'#define varying out\n' +
 									'#define texture2D texture\n';
 
-				psHdr = psHdr+ '#define varying in\n'+
-									'out highp vec4 pc_fragColor;\n'+
-									'#define gl_FragColor pc_fragColor\n'+
-									'#define texture2D texture\n'+
-									'#define textureCube texture\n'+
-									'#define texture2DProj textureProj\n'+
-									'#define texture2DLodEXT textureLod\n'+
-									'#define texture2DProjLodEXT textureProjLod\n'+
-									'#define textureCubeLodEXT textureLod\n'+
-									'#define texture2DGradEXT textureGrad\n'+
-									'#define texture2DProjGradEXT textureProjGrad\n'+
-									'#define textureCubeGradEXT textureGrad\n'+
+				psHdr = psHdr + '#define varying in\n' +
+									'out highp vec4 pc_fragColor;\n' +
+									'#define gl_FragColor pc_fragColor\n' +
+									'#define texture2D texture\n' +
+									'#define textureCube texture\n' +
+									'#define texture2DProj textureProj\n' +
+									'#define texture2DLodEXT textureLod\n' +
+									'#define texture2DProjLodEXT textureProjLod\n' +
+									'#define textureCubeLodEXT textureLod\n' +
+									'#define texture2DGradEXT textureGrad\n' +
+									'#define texture2DProjGradEXT textureProjGrad\n' +
+									'#define textureCubeGradEXT textureGrad\n' +
 									'#define sample sample_var\n';
-				console.log("Transpiling shader to ESSL3!");
+				console.log( "Transpiling shader to ESSL3!" );
+
 			}
 
 			vertexGlsl = '#version 300 es\n' + vsHdr + vertexGlsl;
 			fragmentGlsl = '#version 300 es\n' + psHdr + fragmentGlsl;
-	  } else {
+
+		} else {
+
 			vsHdr = vsHdr + '#define LEFT_EYE_VIEW_ID 0\n';
 
 			vertexGlsl = vsHdr + vertexGlsl;
 			fragmentGlsl = psHdr + fragmentGlsl;
-	  }
-	} else {
-    vertexGlsl = prefixVertex + '#define VIEW_ID 0\n' + '#define LEFT_EYE_VIEW_ID 0\n' + vertexShader;
-  }
 
-//	console.log( '*VERTEX*', vertexGlsl );
-//	console.log( '*FRAGMENT*', fragmentGlsl );
+		}
+
+	} else {
+
+		vertexGlsl = prefixVertex + '#define VIEW_ID 0\n' + '#define LEFT_EYE_VIEW_ID 0\n' + vertexShader;
+
+	}
+
+	//	console.log( '*VERTEX*', vertexGlsl );
+	//	console.log( '*FRAGMENT*', fragmentGlsl );
 
 	var glVertexShader = WebGLShader( gl, gl.VERTEX_SHADER, vertexGlsl );
 	var glFragmentShader = WebGLShader( gl, gl.FRAGMENT_SHADER, fragmentGlsl );
