@@ -8,7 +8,8 @@ import { ArrayCamera } from '../../cameras/ArrayCamera.js';
 import { PerspectiveCamera } from '../../cameras/PerspectiveCamera.js';
 import { WebGLAnimation } from '../webgl/WebGLAnimation.js';
 
-function MultiviewView (viewport, framebuffer) {
+function MultiviewView( viewport, framebuffer ) {
+
 	this.framebuffer = framebuffer;
 
 	this._attributes = {
@@ -19,14 +20,17 @@ function MultiviewView (viewport, framebuffer) {
 	this.getAttributes = function () {
 
 		return this._attributes;
-	}
+
+	};
 
 	this.getViewport = function () {
 
 		return this._viewport;
-	}
+
+	};
+
 }
-          
+
 function WebXRManager( renderer ) {
 
 	var scope = this;
@@ -95,6 +99,7 @@ function WebXRManager( renderer ) {
 	};
 
 	this.setDevice = function ( value ) {
+
 		console.log( 'Using THREE.WebXRManager.' );
 
 		if ( value !== undefined ) device = value;
@@ -135,8 +140,8 @@ function WebXRManager( renderer ) {
 			session.addEventListener( 'selectend', onSessionEvent );
 			session.addEventListener( 'end', onSessionEnd );
 
-			console.log("setSession, presenting, multiview = " + 
-					attributes.multiview);
+			console.log( "setSession, presenting, multiview = " +
+					attributes.multiview );
 			session.baseLayer = new XRWebGLLayer( session, gl, attributes );
 			session.requestFrameOfReference( frameOfReferenceType ).then( function ( value ) {
 
@@ -252,9 +257,10 @@ function WebXRManager( renderer ) {
 
 					cameraVR.projectionMatrix.copy( camera.projectionMatrix );
 
-					if (layer.multiview) {
+					if ( layer.multiview ) {
 
-						scope.multiview_view = new MultiviewView(viewport, layer.framebuffer);
+						scope.multiview_view = new MultiviewView( viewport, layer.framebuffer );
+
 					}
 
 				}
@@ -319,11 +325,14 @@ function WebXRManager( renderer ) {
 
 	//!AB MV
 	this.hasMultiviewSupport = function () {
+
 		if ( session !== null ) {
 
 			return session.baseLayer.multiview;
+
 		}
 		return false;
+
 	};
 
 	this.getViews = function () {
@@ -331,14 +340,15 @@ function WebXRManager( renderer ) {
 		if ( this.hasMultiviewSupport() ) {
 
 			return [ this.multiview_view ];
+
 		}
 
 		return [];
 
 	};
 	//!AB MV end
-	
-  // DEPRECATED
+
+	// DEPRECATED
 
 	this.getStandingMatrix = function () {
 

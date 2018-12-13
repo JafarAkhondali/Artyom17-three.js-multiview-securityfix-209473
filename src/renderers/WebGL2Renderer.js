@@ -61,14 +61,17 @@ function WebGL2Renderer( parameters ) {
 			}
 
 		}
-		var ext = _gl.getExtension('WEBGL_multiview'); //!AB MV
-		if (ext) {
-			console.log("MULTIVIEW extension is supported");
+		var ext = _gl.getExtension( 'WEBGL_multiview' ); //!AB MV
+		if ( ext ) {
+
+			console.log( "MULTIVIEW extension is supported" );
 			this.multiviewSupported = true;
-		}
-		else {
-			console.log("MULTIVIEW extension is NOT supported");
+
+		} else {
+
+			console.log( "MULTIVIEW extension is NOT supported" );
 			this.multiviewSupported = false;
+
 		}
 
 	} catch ( error ) {
