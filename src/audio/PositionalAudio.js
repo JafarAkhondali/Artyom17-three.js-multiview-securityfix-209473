@@ -104,6 +104,13 @@ PositionalAudio.prototype = Object.assign( Object.create( Audio.prototype ), {
 
 			Object3D.prototype.updateMatrixWorld.call( this, force );
 
+			//!AB: ported fix from r99, see #15424, #15422
+			if ( ! this.isPlaying ) {
+
+				return;
+
+			}
+
 			var panner = this.panner;
 			this.matrixWorld.decompose( position, quaternion, scale );
 
