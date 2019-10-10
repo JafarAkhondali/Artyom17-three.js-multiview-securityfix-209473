@@ -83,7 +83,7 @@ import { WebGLTextures } from './webgl/WebGLTextures.js';
 import { WebGLUniforms } from './webgl/WebGLUniforms.js';
 import { WebGLUtils } from './webgl/WebGLUtils.js';
 import { WebVRManager } from './webvr/WebVRManager.js';
-//import { WebXRManager } from './webvr/WebXRManager.js';
+import { WebXRManager } from './webvr/WebXRManager.js';
 
 import { Texture } from '../textures/Texture.js';
 
@@ -380,14 +380,7 @@ function WebGLRenderer( parameters ) {
 
 	// vr
 
-	var vr = null;
-
-	if ( typeof navigator !== 'undefined' ) {
-
-		//vr = ( 'xr' in navigator ) ? new WebXRManager( _this ) : new WebVRManager( _this );
-		vr = new WebVRManager( _this );
-
-	}
+	var vr = ( typeof navigator !== 'undefined' && 'xr' in navigator && 'isSessionSupported' in navigator.xr ) ? new WebXRManager( _this, _gl ) : new WebVRManager( _this );
 
 	this.vr = vr;
 
